@@ -1,0 +1,29 @@
+{
+	"name": "@rushcms/monorepo",
+	"version": "0.0.0",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "turbo run lint",
+		"test": "turbo run test",
+		"clean": "turbo run clean && rm -rf node_modules"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.5",
+		"@types/react": "^18.3.18",
+		"@types/react-dom": "^18.3.5",
+		"typescript": "^5.7.3",
+		"turbo": "^2.3.3",
+		"prettier": "^3.4.2",
+		"eslint": "^9.18.0"
+	},
+	"engines": {
+		"node": ">=18.0.0",
+		"pnpm": ">=8.0.0"
+	},
+	"packageManager": "pnpm@8.15.0"
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@rushcms/client",
+  "version": "0.1.0",
+  "description": "TypeScript API client for RushCMS",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "rushcms",
+    "api",
+    "client",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@rushcms/types": "file:../types"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.3"
+  }
+}
