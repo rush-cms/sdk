@@ -38,16 +38,15 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 
 	const gapClass = gapStyles[block.data.gap]
 	const borderRadiusClass = borderRadiusStyles[block.data.border_radius]
-	const gridColumnsClass = block.data.layout === 'grid' ? gridColumnsStyles[block.data.columns] : ''
 
 	const containerClasses = cn(
 		'w-full',
 		{
 			'grid': block.data.layout === 'grid',
-			[gridColumnsClass]: block.data.layout === 'grid',
 			'columns-2 md:columns-3 lg:columns-4': block.data.layout === 'masonry',
 			'flex overflow-x-auto snap-x snap-mandatory': block.data.layout === 'carousel' || block.data.layout === 'slider'
 		},
+		block.data.layout === 'grid' ? gridColumnsStyles[block.data.columns] : '',
 		gapClass,
 		className
 	)
@@ -91,8 +90,8 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 							<Item
 								original={image.url}
 								thumbnail={image.url}
-								width={1920}
-								height={1080}
+								width="auto"
+								height="auto"
 								caption={block.data.show_captions ? image.name : undefined}
 							>
 								{({ ref, open }) => (
