@@ -30,27 +30,33 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 		return null
 	}
 
-	const gapClass = gapStyles[block.data.gap]
-	const borderRadiusClass = borderRadiusStyles[block.data.border_radius]
+	const layout = (block.data.layout || 'grid').toString().toLowerCase() as GalleryBlockType['data']['layout']
+	const columns = Number(block.data.columns) as 2 | 3 | 4 | 1
+	const safeColumns = (columns === 2 || columns === 3 || columns === 4) ? columns : 3
+	const gapClass = gapStyles[block.data.gap] || 'gap-4'
+	const borderRadiusClass = borderRadiusStyles[block.data.border_radius] || 'rounded-none'
 
 	const containerClasses = cn(
 		'w-full',
 		{
-			'grid grid-cols-2': block.data.layout === 'grid' && block.data.columns === 2,
-			'grid grid-cols-2 md:grid-cols-3': block.data.layout === 'grid' && block.data.columns === 3,
-			'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4': block.data.layout === 'grid' && block.data.columns === 4,
-			'columns-2 md:columns-3 lg:columns-4': block.data.layout === 'masonry',
-			'flex overflow-x-auto snap-x snap-mandatory': block.data.layout === 'carousel' || block.data.layout === 'slider'
+			'grid': layout === 'grid',
+			'grid-cols-1': layout === 'grid' && safeColumns === 1,
+			'grid-cols-2': layout === 'grid' && safeColumns >= 2,
+			'md:grid-cols-3': layout === 'grid' && safeColumns >= 3,
+			'lg:grid-cols-4': layout === 'grid' && safeColumns >= 4,
+			'columns-2 md:columns-3 lg:columns-4': layout === 'masonry',
+			'flex overflow-x-auto snap-x snap-mandatory': layout === 'carousel' || layout === 'slider'
 		},
-		gapClass,
+		layout === 'masonry' ? undefined : gapClass,
+		layout === 'masonry' && gapClass?.replace('gap-', 'gap-x-'),
 		className
 	)
 
-	if (block.data.layout === 'slider' || block.data.layout === 'carousel') {
+	if (layout === 'slider' || layout === 'carousel') {
 		return <GallerySlider
             block={block}
             className={className}
-            type={block.data.layout}
+            type={layout}
         />
 	}
 
@@ -85,9 +91,6 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 							<Item
 								original={image.url}
 								thumbnail={image.url}
-								width="auto"
-								height="auto"
-								caption={block.data.show_captions ? image.name : undefined}
 							>
 								{({ ref, open }) => (
 									<div ref={ref} onClick={open}>
@@ -114,7 +117,8 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 					closeOnVerticalDrag: true,
 					pinchToClose: true,
 					escKey: true,
-					arrowKeys: true
+					arrowKeys: true,
+					padding: { top: 20, bottom: 20, left: 20, right: 20 }
 				}}
 			>
 				{galleryContent}
