@@ -1,6 +1,6 @@
 {
   "name": "@rushcms/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React components and hooks for RushCMS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -29,8 +29,8 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
-    "@rushcms/client": "file:../client",
-    "@rushcms/types": "file:../types",
+    "@rushcms/client": "workspace:*",
+    "@rushcms/types": "workspace:*",
     "clsx": "^2.1.1",
     "photoswipe": "^5.4.4",
     "react-photoswipe-gallery": "^4.0.0",
