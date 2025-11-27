@@ -40,7 +40,6 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 		'w-full',
 		{
 			'grid': layout === 'grid',
-			'grid-cols-1': layout === 'grid' && safeColumns === 1,
 			'grid-cols-2': layout === 'grid' && safeColumns >= 2,
 			'md:grid-cols-3': layout === 'grid' && safeColumns >= 3,
 			'lg:grid-cols-4': layout === 'grid' && safeColumns >= 4,
