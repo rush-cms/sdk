@@ -25,12 +25,6 @@ const borderRadiusStyles = {
 	full: 'rounded-full'
 }
 
-const gridColumnsStyles: Record<number, string> = {
-	2: 'grid-cols-2',
-	3: 'grid-cols-2 md:grid-cols-3',
-	4: 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-}
-
 export function GalleryBlock({ block, className }: GalleryBlockProps) {
 	if (!block.data.images || block.data.images.length === 0) {
 		return null
@@ -42,11 +36,12 @@ export function GalleryBlock({ block, className }: GalleryBlockProps) {
 	const containerClasses = cn(
 		'w-full',
 		{
-			'grid': block.data.layout === 'grid',
+			'grid grid-cols-2': block.data.layout === 'grid' && block.data.columns === 2,
+			'grid grid-cols-2 md:grid-cols-3': block.data.layout === 'grid' && block.data.columns === 3,
+			'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4': block.data.layout === 'grid' && block.data.columns === 4,
 			'columns-2 md:columns-3 lg:columns-4': block.data.layout === 'masonry',
 			'flex overflow-x-auto snap-x snap-mandatory': block.data.layout === 'carousel' || block.data.layout === 'slider'
 		},
-		block.data.layout === 'grid' ? gridColumnsStyles[block.data.columns] : '',
 		gapClass,
 		className
 	)
