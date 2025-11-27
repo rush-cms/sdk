@@ -1,10 +1,15 @@
 {
   "name": "@rushcms/react",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "React components and hooks for RushCMS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "repository": {
+      "type": "git",
+      "url": "git+https://github.com/rush-cms/sdk.git",
+      "directory": "packages/react"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
