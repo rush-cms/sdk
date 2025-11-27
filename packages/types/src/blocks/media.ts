@@ -30,6 +30,8 @@ export interface GalleryImage {
 	url: string
 	preview: string
 	thumb: string
+	width?: number
+	height?: number
 }
 
 export type GalleryLayout = 'grid' | 'masonry' | 'carousel' | 'slider'
