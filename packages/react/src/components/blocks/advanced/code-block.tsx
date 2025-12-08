@@ -15,15 +15,20 @@ export function CodeBlock({ block, className }: CodeBlockProps) {
 	const highlightedLines = parseHighlightLines(block.data.highlight_lines)
 
 	return (
-		<div className={cn('relative rounded-lg overflow-hidden bg-gray-900 my-6', className)}>
-			{block.data.filename && (
-				<div className='px-4 py-2 bg-gray-800 text-sm text-gray-300 border-b border-gray-700'>
-					{block.data.filename}
+		<div className={cn('relative rounded-lg overflow-hidden bg-[#1e1e1e] my-6 shadow-xl border border-[#3e3e3e]', className)}>
+			{(block.data.filename || block.data.language) && (
+				<div className='px-4 py-3 bg-[#2d2d2d] text-sm border-b border-[#3e3e3e] flex items-center justify-between'>
+					<span className='text-[#d4d4d4] font-medium'>{block.data.filename}</span>
+					{block.data.language && (
+						<span className='text-xs px-2.5 py-1 bg-[#3e3e3e] text-[#4fc3f7] rounded font-mono uppercase tracking-wider font-semibold'>
+							{block.data.language}
+						</span>
+					)}
 				</div>
 			)}
-			<div className='overflow-x-auto'>
-				<pre className='p-4'>
-					<code className={`language-${block.data.language} text-sm`}>
+			<div className='overflow-x-auto bg-[#1e1e1e]'>
+				<pre className='p-4 bg-[#1e1e1e]'>
+					<code className={`language-${block.data.language} text-sm block`}>
 						{block.data.show_line_numbers ? (
 							<table className='w-full border-collapse'>
 								<tbody>
@@ -35,13 +40,13 @@ export function CodeBlock({ block, className }: CodeBlockProps) {
 											<tr
 												key={index}
 												className={cn({
-													'bg-blue-900/30': isHighlighted
+													'bg-[#264f78]': isHighlighted
 												})}
 											>
-												<td className='pr-4 text-right text-gray-500 select-none w-12'>
+												<td className='pr-4 text-right text-[#858585] select-none w-12 font-mono text-xs'>
 													{lineNumber}
 												</td>
-												<td className='text-gray-100'>
+												<td className='text-[#d4d4d4] font-mono leading-relaxed'>
 													{line || '\n'}
 												</td>
 											</tr>
@@ -50,7 +55,7 @@ export function CodeBlock({ block, className }: CodeBlockProps) {
 								</tbody>
 							</table>
 						) : (
-							<div className='text-gray-100'>
+							<div className='text-[#d4d4d4] font-mono whitespace-pre leading-relaxed'>
 								{block.data.code}
 							</div>
 						)}
