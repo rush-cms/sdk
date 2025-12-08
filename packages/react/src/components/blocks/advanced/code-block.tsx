@@ -1,5 +1,7 @@
 import { CodeBlock as CodeBlockType } from '@rushcms/types'
 import { cn, parseHighlightLines } from '../../../utils'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 interface CodeBlockProps {
 	block: CodeBlockType
@@ -11,7 +13,6 @@ export function CodeBlock({ block, className }: CodeBlockProps) {
 		return null
 	}
 
-	const lines = block.data.code.split('\n')
 	const highlightedLines = parseHighlightLines(block.data.highlight_lines)
 
 	return (
@@ -27,40 +28,32 @@ export function CodeBlock({ block, className }: CodeBlockProps) {
 				</div>
 			)}
 			<div className='code-block-content overflow-x-auto'>
-				<pre className='p-4'>
-					<code className={`language-${block.data.language} text-sm block`}>
-						{block.data.show_line_numbers ? (
-							<table className='w-full border-collapse'>
-								<tbody>
-									{lines.map((line, index) => {
-										const lineNumber = index + 1
-										const isHighlighted = highlightedLines.has(lineNumber)
-
-										return (
-											<tr
-												key={index}
-												className={cn('code-line', {
-													'code-line-highlighted': isHighlighted
-												})}
-											>
-												<td className='code-line-number pr-4 text-right select-none w-12 font-mono text-xs'>
-													{lineNumber}
-												</td>
-												<td className='code-line-text font-mono leading-relaxed'>
-													{line || '\n'}
-												</td>
-											</tr>
-										)
-									})}
-								</tbody>
-							</table>
-						) : (
-							<div className='code-text font-mono whitespace-pre leading-relaxed'>
-								{block.data.code}
-							</div>
-						)}
-					</code>
-				</pre>
+				<SyntaxHighlighter
+					language={block.data.language || 'text'}
+					style={vscDarkPlus}
+					showLineNumbers={block.data.show_line_numbers}
+					wrapLines={true}
+					lineProps={(lineNumber) => {
+						const isHighlighted = highlightedLines.has(lineNumber)
+						return {
+							className: isHighlighted ? 'code-line-highlighted' : ''
+						}
+					}}
+					customStyle={{
+						margin: 0,
+						padding: '1rem',
+						background: '#1e1e1e',
+						fontSize: '0.875rem',
+						lineHeight: '1.625'
+					}}
+					codeTagProps={{
+						style: {
+							fontFamily: 'var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+						}
+					}}
+				>
+					{block.data.code}
+				</SyntaxHighlighter>
 			</div>
 		</div>
 	)
