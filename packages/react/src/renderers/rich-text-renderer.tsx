@@ -126,8 +126,19 @@ function ParagraphNode({ node }: { node: TipTapParagraphNode }) {
 function HeadingNode({ node }: { node: TipTapHeadingNode }) {
 	const Tag = `h${node.attrs.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
+	const headingClasses = {
+		1: 'text-4xl font-extrabold mt-8 mb-4 text-gray-900',
+		2: 'text-3xl font-bold mt-8 mb-4 text-gray-900',
+		3: 'text-2xl font-bold mt-6 mb-3 text-gray-800',
+		4: 'text-xl font-semibold mt-6 mb-3 text-gray-800',
+		5: 'text-lg font-semibold mt-4 mb-2 text-gray-700',
+		6: 'text-base font-semibold mt-4 mb-2 text-gray-700'
+	}
+
+	const className = headingClasses[node.attrs.level as keyof typeof headingClasses] || headingClasses[2]
+
 	return (
-		<Tag className='mt-6 mb-4 font-bold'>
+		<Tag className={className}>
 			{node.content?.map((child, index) => (
 				<TipTapNodeRenderer key={index} node={child} />
 			))}
