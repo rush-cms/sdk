@@ -4,6 +4,7 @@ import type {
 	EntriesQueryParams,
 	Navigation,
 	LinkPage,
+	Homepage,
 	ApiResponse
 } from '@rushcms/types'
 import type { CacheConfig } from './cache'
@@ -120,7 +121,7 @@ export class RushCMSClient {
 	}
 
 	async getEntries(
-		collectionId: number,
+		collection: number | string,
 		params?: EntriesQueryParams
 	): Promise<PaginatedResponse<Entry>> {
 		const queryString = new URLSearchParams()
@@ -139,19 +140,23 @@ export class RushCMSClient {
 			queryString.set('tag_operator', params.tag_operator)
 		}
 
-		const endpoint = `/collections/${String(collectionId)}/entries${
-			queryString.toString() ? `?${queryString}` : ''
-		}`
+		const endpoint = `/collections/${String(collection)}/entries${queryString.toString() ? `?${queryString}` : ''
+			}`
 
 		return this.request<PaginatedResponse<Entry>>(endpoint)
 	}
 
 	async getEntry(
-		collectionId: number,
+		collection: number | string,
 		slug: string
 	): Promise<Entry> {
-		const endpoint = `/collections/${String(collectionId)}/entries/${slug}`
+		const endpoint = `/collections/${String(collection)}/entries/${slug}`
 		return this.request<Entry>(endpoint)
+	}
+
+	async getHomepage(): Promise<ApiResponse<Homepage>> {
+		const endpoint = '/homepage'
+		return this.request<ApiResponse<Homepage>>(endpoint)
 	}
 
 	async getNavigations(): Promise<ApiResponse<Navigation[]>> {
