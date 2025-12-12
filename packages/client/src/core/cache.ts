@@ -15,7 +15,7 @@ export class Cache {
 		this.store = new Map()
 	}
 
-	get<T>(key: string): T | null {
+	get(key: string): unknown | null {
 		if (!this.config.enabled) {
 			return null
 		}
@@ -31,10 +31,10 @@ export class Cache {
 			return null
 		}
 
-		return entry.data as T
+		return entry.data
 	}
 
-	set<T>(key: string, data: T): void {
+	set(key: string, data: unknown): void {
 		if (!this.config.enabled) {
 			return
 		}

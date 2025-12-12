@@ -1,4 +1,4 @@
-import { TipTapContent } from './tiptap'
+import type { TipTapContent } from './tiptap'
 
 export interface RichTextBlock {
 	type: 'richtext'

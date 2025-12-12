@@ -1,4 +1,4 @@
-import {
+import type {
 	Entry,
 	PaginatedResponse,
 	EntriesQueryParams,
@@ -6,7 +6,8 @@ import {
 	LinkPage,
 	ApiResponse
 } from '@rushcms/types'
-import { Cache, CacheConfig } from './cache'
+import type { CacheConfig } from './cache'
+import { Cache } from './cache'
 import {
 	RushCMSError,
 	RushCMSNotFoundError,
@@ -58,9 +59,9 @@ export class RushCMSClient {
 		const cacheKey = `${url}${JSON.stringify(options)}`
 
 		if (this.config.cache.enabled && options.method !== 'POST') {
-			const cached = this.cache.get<T>(cacheKey)
+			const cached = this.cache.get(cacheKey)
 			if (cached) {
-				return cached
+				return cached as T
 			}
 		}
 
@@ -70,7 +71,7 @@ export class RushCMSClient {
 				'Authorization': `Bearer ${this.config.apiToken}`,
 				'Content-Type': 'application/json',
 				'Accept': 'application/json',
-				...options.headers
+				...(options.headers ?? {})
 			}
 		})
 
@@ -78,7 +79,7 @@ export class RushCMSClient {
 			await this.handleError(response)
 		}
 
-		const data = await response.json()
+		const data = await response.json() as T
 
 		if (this.config.cache.enabled && options.method !== 'POST') {
 			this.cache.set(cacheKey, data)
@@ -107,11 +108,11 @@ export class RushCMSClient {
 			case 422:
 				throw new RushCMSValidationError(
 					'Validation error',
-					(errorData as { errors?: Record<string, string[]> })?.errors
+					(errorData as { errors?: Record<string, string[]> }).errors
 				)
 			default:
 				throw new RushCMSError(
-					`API Error: ${response.status} ${response.statusText}`,
+					`API Error: ${String(response.status)} ${response.statusText}`,
 					status,
 					errorData
 				)
@@ -138,7 +139,7 @@ export class RushCMSClient {
 			queryString.set('tag_operator', params.tag_operator)
 		}
 
-		const endpoint = `/collections/${collectionId}/entries${
+		const endpoint = `/collections/${String(collectionId)}/entries${
 			queryString.toString() ? `?${queryString}` : ''
 		}`
 
@@ -149,7 +150,7 @@ export class RushCMSClient {
 		collectionId: number,
 		slug: string
 	): Promise<Entry> {
-		const endpoint = `/collections/${collectionId}/entries/${slug}`
+		const endpoint = `/collections/${String(collectionId)}/entries/${slug}`
 		return this.request<Entry>(endpoint)
 	}
 

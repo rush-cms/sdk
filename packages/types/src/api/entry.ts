@@ -1,5 +1,5 @@
-import { Author, FeaturedImage, Tag, EntryMeta } from './responses'
-import { Block } from '../blocks'
+import type { Author, FeaturedImage, Tag, EntryMeta } from './responses'
+import type { Block } from '../blocks'
 
 export interface Entry {
 	id: number

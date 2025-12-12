@@ -1,4 +1,4 @@
-import { AspectRatio } from './media'
+import type { AspectRatio } from './media'
 
 export interface YoutubeBlock {
 	type: 'youtube'

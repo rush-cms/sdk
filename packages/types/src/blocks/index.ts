@@ -1,7 +1,7 @@
-import { RichTextBlock, CalloutBlock, ToggleBlock, QuoteBlock } from './basic'
-import { ImageBlock, GalleryBlock, VideoBlock } from './media'
-import { YoutubeBlock, EmbedBlock, BookmarkBlock } from './embed'
-import { AlertBlock, DividerBlock, CodeBlock, ColumnsBlock, ButtonBlock } from './advanced'
+import type { RichTextBlock, CalloutBlock, ToggleBlock, QuoteBlock } from './basic'
+import type { ImageBlock, GalleryBlock, VideoBlock } from './media'
+import type { YoutubeBlock, EmbedBlock, BookmarkBlock } from './embed'
+import type { AlertBlock, DividerBlock, CodeBlock, ColumnsBlock, ButtonBlock } from './advanced'
 
 export * from './tiptap'
 export * from './basic'

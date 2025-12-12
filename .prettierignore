@@ -6,4 +6,7 @@ build
 coverage
 *.log
 .ia
+.ai
 .idea
+examples
+pnpm-lock.yaml
