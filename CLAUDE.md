@@ -47,16 +47,19 @@ const config = {
 - `pnpm clean`: Clean `dist` and `node_modules`
 
 ## ORGANIZATION & STRUCTURE
-Use `.ia/` directory (gitignored):
+Use `.ai/` directory (gitignored):
 
 ```bash
-.ia/
+.ai/
     ├── current-sprint.md    # Active sprint only
     ├── backlog.md           # Future tasks and ideas
-    ├── completed/           # Archived sprints by date (YYYY-MM-DD.md)
-    ├── notes.md             # Quick thoughts, blockers, ideas
     ├── context.md           # State between sessions
-    └── decisions.md         # Architectural decisions
+    ├── reports/             # Reports and Analysis by date
+    ├── completed/           # Archived sprints by date
+    ├── notes/               # Quick thoughts, blockers, ideas by date
+    └── decisions/           # Architectural decisions by 
+    
+# date and file format: (YYYY-MM-DD-{title}.md)
 ```
 
 ## SPRINT MANAGEMENT
@@ -144,12 +147,12 @@ Task complete when ALL checked:
 ### Before Clearing Context
 **ALWAYS update these files**:
 
-1. **`.ia/current-sprint.md`**
+1. **`.ai/current-sprint.md`**
 - Mark completed tasks `[x]`
 - Add new tasks discovered
 - Update time spent
 
-2. **`.ia/context.md`**
+2. **`.ai/context.md`**
 ```markdown
 ## Last Updated: [timestamp]
 
