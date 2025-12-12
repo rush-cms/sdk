@@ -1,36 +1,50 @@
-# Developer Guidelines & Best Practices
+# RushCMS SDK - Developer Guidelines
 
 ## MANDATORY CODING STANDARDS - NEVER VIOLATE THESE:
-1. ALWAYS use single quotes ('), NEVER double quotes
+1. ALWAYS use single quotes ('), NEVER double quotes. **Exception**: JSON strings, chadcn/ui files
 2. NEVER add semicolons at the end of `ts` and `tsx` lines
-3. ALL files must be kebab-case (tech-detector.tsx, not TechDetector.tsx)
+3. ALL files must be kebab-case (rush-cms-client.ts, not RushCMSClient.ts)
 4. **NEVER** inline comments `// this is an inline comment`
 5. Use tab for indentation with size 4 (tab size = 4)
 6. No trailing commas in objects/arrays
-7. Tailwind classes only, no custom CSS unless absolutely necessary
-8. This is a **MONO REPO**, so there'll be a lot of projects here in subfolders
+7. Use `pnpm` for package management
+8. This is a **MONO REPO**, all packages are in `packages/` directory
 
 ### Examples
 ```typescript
 // ✅ CORRECT
 const message = 'Hello World'
 const config = {
-	name: 'TechRadar',
+	name: 'RushCMS',
 	version: '1.0.0'
 }
 
 // ❌ WRONG
 const message = "Hello World";  // Never use double quotes or semicolons
 const config = {
-    name: "TechRadar",  // Wrong: spaces instead of tabs
+    name: "RushCMS",  // Wrong: spaces instead of tabs
     version: "1.0.0", // No trailing comma
 };
 ```
 
 ## CORE STACK
-Read `package.json` for complete information
+- **Monorepo Manager**: Turbo + Lerna
+- **Package Manager**: pnpm
+- **Languages**: TypeScript, React
+- **Bundler**: tsup (for libraries)
+- **Packages**:
+  - `@rushcms/client`: The core JS/TS client
+  - `@rushcms/react`: React hooks and components
+  - `@rushcms/types`: Shared type definitions
 
-## PROJECT MANAGEMENT
+## COMMANDS
+
+### Root (Run from `/`)
+- `pnpm build`: Build all packages (uses turbo)
+- `pnpm dev`: Run all packages in watch mode
+- `pnpm lint`: Lint all packages
+- `pnpm test`: Run tests across packages
+- `pnpm clean`: Clean `dist` and `node_modules`
 
 ## ORGANIZATION & STRUCTURE
 Use `.ia/` directory (gitignored):
@@ -98,53 +112,30 @@ Task complete when ALL checked:
 - [ ] No commented-out code
 - [ ] No debug statements (console.log, debugger)
 - [ ] Code follows all mandatory coding standards
+- [ ] Public API is properly typed and exported
 
 ### Functionality
-- [ ] Works as specified across all extension contexts
+- [ ] Works as specified in the implementation plan
 - [ ] Edge cases handled gracefully
-- [ ] User-friendly error messages
-- [ ] Loading states implemented
-- [ ] Responsive design (popup works at different sizes)
-
-### Chrome Extension Specific
-- [ ] Works in all required contexts (popup, content, background)
-- [ ] Message passing implemented correctly
-- [ ] Permissions properly declared in manifest
-- [ ] CSP compliant (no inline scripts)
-- [ ] Storage API used correctly
-- [ ] Background service worker properly event-driven
+- [ ] Error handling is robust (RushCMSError, etc.)
 
 ### Testing
-- [ ] Tests written and passing
-- [ ] Unit tests for business logic
-- [ ] Integration tests for Chrome APIs
-- [ ] Tests actually test the feature
-- [ ] Manual testing in Chrome with extension loaded
-- [ ] No console errors in browser DevTools
+- [ ] Unit tests written and passing
+- [ ] Integration tests passing (where applicable)
+- [ ] No regressions in other packages
 
 ### Performance
-- [ ] Bundle size optimized (check with build output)
-- [ ] No memory leaks (test with Chrome Task Manager)
-- [ ] Efficient DOM operations in content scripts
-- [ ] Cached results when appropriate
-- [ ] Background service worker properly terminates when idle
-
-### Security
-- [ ] Input validated and sanitized
-- [ ] No eval() or unsafe innerHTML usage
-- [ ] CSP headers properly configured
-- [ ] No sensitive data in logs or storage
-- [ ] XSS protection in content scripts
-- [ ] Proper origin checks for message passing
+- [ ] Bundle size optimized (check with `tsup` output)
+- [ ] No unnecessary dependencies added
 
 ### Documentation
-- [ ] Complex logic has JSDoc comments
+- [ ] Types are well-documented (JSDoc)
+- [ ] README updated for the specific package if API changed
 - [ ] Sprint file updated with progress
-- [ ] Architectural decisions recorded (if applicable)
-- [ ] README updated if public API changed
 
 ### Git
-- I'll do the committing
+- Attomic commit per feature
+- Commit message follows conventional commits
 
 ---
 
@@ -184,3 +175,4 @@ Task complete when ALL checked:
 
 ### After Clearing Context
 Start a new session with: "Continue from last session following CLAUDE.md guidelines"
+
