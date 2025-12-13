@@ -18,7 +18,7 @@ interface UseEntryResult {
 }
 
 export function useEntry({ collectionId, slug, enabled = true }: UseEntryOptions): UseEntryResult {
-	const { client } = useRushCMS()
+	const { client, previewData } = useRushCMS()
 	const [entry, setEntry] = useState<Entry | null>(null)
 	const [loading, setLoading] = useState(enabled)
 	const [error, setError] = useState<Error | null>(null)
@@ -42,8 +42,18 @@ export function useEntry({ collectionId, slug, enabled = true }: UseEntryOptions
 		fetchEntry()
 	}, [collectionId, slug, enabled])
 
+	// Live Preview Override
+	// We check if we have preview data for this specific entry (by ID usually, but we might need to match by slug in a real scenario if the preview message sends slug)
+	// For now let's assume the preview payload sends the ID.
+	// But wait, the hook uses slug. We might not know the ID until we fetch it first.
+	// So we can check if the currently fetched entry ID matches any preview data.
+
+	const previewEntry = entry?.id && previewData[`entry:${entry.id}`]
+		? (previewData[`entry:${entry.id}`] as Entry)
+		: null
+
 	return {
-		entry,
+		entry: previewEntry || entry,
 		loading,
 		error,
 		refetch: fetchEntry

@@ -20,7 +20,7 @@ interface UseEntriesResult {
 }
 
 export function useEntries({ collectionId, params, enabled = true }: UseEntriesOptions): UseEntriesResult {
-	const { client } = useRushCMS()
+	const { client, previewData } = useRushCMS()
 	const [pagination, setPagination] = useState<PaginatedResponse<Entry> | null>(null)
 	const [loading, setLoading] = useState(enabled)
 	const [error, setError] = useState<Error | null>(null)
@@ -48,8 +48,14 @@ export function useEntries({ collectionId, params, enabled = true }: UseEntriesO
 		fetchEntries()
 	}, [collectionId, JSON.stringify(params), enabled])
 
+	// Live Preview Override
+	const entriesWithPreview = pagination?.data.map(entry => {
+		const preview = previewData[`entry:${entry.id}`]
+		return preview ? (preview as Entry) : entry
+	}) || []
+
 	return {
-		entries: pagination?.data || [],
+		entries: entriesWithPreview,
 		pagination,
 		loading,
 		error,

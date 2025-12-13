@@ -2,9 +2,11 @@
 
 import { createContext, useContext } from 'react'
 import { RushCMSClient } from '@rushcms/client'
+import { useLivePreview } from '../../hooks/use-live-preview'
 
 interface RushCMSContextValue {
 	client: RushCMSClient
+	previewData: Record<string, unknown>
 }
 
 const RushCMSContext = createContext<RushCMSContextValue | null>(null)
@@ -15,8 +17,10 @@ interface RushCMSProviderProps {
 }
 
 export function RushCMSProvider({ client, children }: RushCMSProviderProps) {
+	const previewData = useLivePreview()
+
 	return (
-		<RushCMSContext.Provider value={{ client }}>
+		<RushCMSContext.Provider value={{ client, previewData }}>
 			{children}
 		</RushCMSContext.Provider>
 	)
