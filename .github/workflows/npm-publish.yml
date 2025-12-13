@@ -41,4 +41,5 @@ jobs:
       - name: Publish with Lerna
         run: npx lerna publish from-package --yes --no-verify-access -- --provenance
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
