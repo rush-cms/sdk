@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { RushCMSClient } from './rush-cms-client'
 import { RushCMSNotFoundError } from './errors'
+import { MemoryStorageAdapter } from './storage/memory-adapter'
 
 const mockConfig = {
     baseUrl: 'https://api.rushcms.com',
@@ -96,5 +97,42 @@ describe('RushCMSClient', () => {
         await client.getEntries(1)
 
         expect(fetch).toHaveBeenCalledTimes(1)
+    })
+
+    it('should use custom storage adapter', async () => {
+        const storage = new MemoryStorageAdapter()
+        const spy = vi.spyOn(storage, 'get')
+
+        client = new RushCMSClient({
+            ...mockConfig,
+            storage
+        })
+
+        const mockResponse = { data: [] }
+        vi.mocked(fetch).mockResolvedValue({
+            ok: true,
+            json: async () => mockResponse,
+            status: 200
+        } as Response)
+
+        await client.getEntries(1)
+        expect(spy).toHaveBeenCalled()
+    })
+
+    it('should log debug messages when debug is enabled', async () => {
+        const consoleSpy = vi.spyOn(console, 'log')
+        client = new RushCMSClient({
+            ...mockConfig,
+            debug: true
+        })
+
+        vi.mocked(fetch).mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: [] }),
+            status: 200
+        } as Response)
+
+        await client.getEntries(1)
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[RushCMS]'), expect.anything())
     })
 })

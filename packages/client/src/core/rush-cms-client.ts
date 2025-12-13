@@ -7,8 +7,8 @@ import type {
 	Homepage,
 	ApiResponse
 } from '@rushcms/types'
-import type { CacheConfig } from './cache'
-import { Cache } from './cache'
+import type { StorageAdapter } from './storage/storage-adapter'
+import { MemoryStorageAdapter } from './storage/memory-adapter'
 import {
 	RushCMSError,
 	RushCMSNotFoundError,
@@ -21,22 +21,31 @@ export interface RushCMSClientConfig {
 	baseUrl: string
 	apiToken: string
 	siteSlug: string
-	cache?: Partial<CacheConfig>
+	cache?: {
+		enabled?: boolean
+		ttl?: number
+	}
+	storage?: StorageAdapter
+	debug?: boolean
 }
 
 interface InternalRushCMSClientConfig {
 	baseUrl: string
 	apiToken: string
 	siteSlug: string
-	cache: CacheConfig
+	cache: {
+		enabled: boolean
+		ttl: number
+	}
+	storage: StorageAdapter
+	debug: boolean
 }
 
 export class RushCMSClient {
 	private config: InternalRushCMSClientConfig
-	private cache: Cache
 
 	constructor(config: RushCMSClientConfig) {
-		const cacheConfig: CacheConfig = {
+		const cacheConfig = {
 			enabled: config.cache?.enabled ?? true,
 			ttl: config.cache?.ttl ?? 7200
 		}
@@ -45,10 +54,16 @@ export class RushCMSClient {
 			baseUrl: config.baseUrl,
 			apiToken: config.apiToken,
 			siteSlug: config.siteSlug,
-			cache: cacheConfig
+			cache: cacheConfig,
+			storage: config.storage || new MemoryStorageAdapter(),
+			debug: config.debug || false
 		}
+	}
 
-		this.cache = new Cache(cacheConfig)
+	private log(message: string, data?: unknown): void {
+		if (this.config.debug) {
+			console.log(`[RushCMS] ${message}`, data || '')
+		}
 	}
 
 	private async request<T>(
@@ -56,37 +71,49 @@ export class RushCMSClient {
 		options: RequestInit = {}
 	): Promise<T> {
 		const url = `${this.config.baseUrl}/api/v1/${this.config.siteSlug}${endpoint}`
+		const startTime = Date.now()
+
+		this.log(`Request: ${options.method || 'GET'} ${endpoint}`)
 
 		const cacheKey = `${url}${JSON.stringify(options)}`
 
 		if (this.config.cache.enabled && options.method !== 'POST') {
-			const cached = this.cache.get(cacheKey)
+			const cached = await this.config.storage.get<T>(cacheKey)
 			if (cached) {
-				return cached as T
+				this.log(`Cache HIT: ${endpoint}`)
+				return cached
 			}
+			this.log(`Cache MISS: ${endpoint}`)
 		}
 
-		const response = await fetch(url, {
-			...options,
-			headers: {
-				'Authorization': `Bearer ${this.config.apiToken}`,
-				'Content-Type': 'application/json',
-				'Accept': 'application/json',
-				...(options.headers ?? {})
+		try {
+			const response = await fetch(url, {
+				...options,
+				headers: {
+					'Authorization': `Bearer ${this.config.apiToken}`,
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+					...(options.headers ?? {})
+				}
+			})
+
+			this.log(`Response: ${response.status} (${Date.now() - startTime}ms)`)
+
+			if (!response.ok) {
+				await this.handleError(response)
 			}
-		})
 
-		if (!response.ok) {
-			await this.handleError(response)
+			const data = await response.json() as T
+
+			if (this.config.cache.enabled && options.method !== 'POST') {
+				await this.config.storage.set(cacheKey, data, this.config.cache.ttl)
+			}
+
+			return data
+		} catch (error) {
+			this.log(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+			throw error
 		}
-
-		const data = await response.json() as T
-
-		if (this.config.cache.enabled && options.method !== 'POST') {
-			this.cache.set(cacheKey, data)
-		}
-
-		return data
 	}
 
 	private async handleError(response: Response): Promise<never> {
@@ -179,11 +206,11 @@ export class RushCMSClient {
 		return this.request<ApiResponse<LinkPage>>(endpoint)
 	}
 
-	clearCache(): void {
-		this.cache.clear()
+	async clearCache(): Promise<void> {
+		await this.config.storage.clear()
 	}
 
-	deleteFromCache(key: string): void {
-		this.cache.delete(key)
+	async deleteFromCache(key: string): Promise<void> {
+		await this.config.storage.delete(key)
 	}
 }
