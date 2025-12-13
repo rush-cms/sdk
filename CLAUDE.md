@@ -54,6 +54,7 @@ Use `.ai/` directory (gitignored):
     ├── current-sprint.md    # Active sprint only
     ├── backlog.md           # Future tasks and ideas
     ├── context.md           # State between sessions
+    ├── features/            # Implemented features, by name
     ├── reports/             # Reports and Analysis by date
     ├── completed/           # Archived sprints by date
     ├── notes/               # Quick thoughts, blockers, ideas by date
