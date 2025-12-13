@@ -1,6 +1,6 @@
 {
   "name": "@rushcms/client",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "TypeScript API client for RushCMS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
