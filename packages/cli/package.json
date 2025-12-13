@@ -8,6 +8,13 @@
     "bin": {
         "rushcms": "./dist/index.js"
     },
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/rush-cms/sdk.git",
