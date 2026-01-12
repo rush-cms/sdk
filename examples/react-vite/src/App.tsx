@@ -1,7 +1,8 @@
 import { useEntries } from '@rushcms/react'
+import type { Entry } from '@rushcms/types'
 
 function App() {
-	const { data, loading, error } = useEntries(1)
+	const { entries, pagination, loading, error } = useEntries({ collectionId: 1 })
 
 	if (loading) {
 		return (
@@ -22,7 +23,7 @@ function App() {
 		)
 	}
 
-	if (!data || data.data.length === 0) {
+	if (!entries || entries.length === 0) {
 		return (
 			<main>
 				<h1>RushCMS React + Vite Example</h1>
@@ -35,10 +36,10 @@ function App() {
 	return (
 		<main>
 			<h1>RushCMS React + Vite Example</h1>
-			<p>Showing {data.data.length} of {data.total} entries from collection 1</p>
+			<p>Showing {entries.length} of {pagination?.meta.total || entries.length} entries from collection 1</p>
 
 			<h2>Entries</h2>
-			{data.data.map(entry => (
+			{entries.map((entry: Entry) => (
 				<article key={entry.id} className="entry-card">
 					<h3>{entry.title}</h3>
 					<p><strong>Slug:</strong> {entry.slug}</p>
@@ -64,3 +65,4 @@ function App() {
 }
 
 export default App
+

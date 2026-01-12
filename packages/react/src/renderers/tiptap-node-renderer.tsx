@@ -1,8 +1,10 @@
 'use client'
 
+import React from 'react'
 import type { TipTapNode, TipTapMark, FeaturedImage } from '@rushcms/types'
 import { cn, getYoutubeVideoId, buildYoutubeEmbedUrl } from '../utils'
 import { GalleryBlock } from '../components/blocks/media/gallery-block'
+import type { GalleryImage } from '@rushcms/types'
 
 interface TipTapNodeRendererProps {
 	node: TipTapNode
@@ -24,7 +26,7 @@ export function TipTapNodeRenderer({ node, className }: TipTapNodeRendererProps)
 			)
 
 		case 'heading': {
-			const HeadingTag = `h${node.attrs.level}` as keyof JSX.IntrinsicElements
+			const HeadingTag = `h${node.attrs.level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 			return (
 				<HeadingTag style={{ textAlign: node.attrs.textAlign }} className={className}>
 					{node.content?.map((child, i) => (
@@ -241,7 +243,8 @@ function TipTapYoutubeEmbed({ data, className }: { data: Record<string, unknown>
 function TipTapGallery({ data, className }: { data: Record<string, unknown>, className?: string }) {
 	const images = data.images as FeaturedImage[]
 	const layout = (data.layout as 'grid' | 'masonry' | 'slider' | 'carousel') || 'grid'
-	const columns = (data.columns as number) || 3
+	const columnsValue = (data.columns as number) || 3
+	const columns = (columnsValue === 2 || columnsValue === 3 || columnsValue === 4 ? columnsValue : 3) as 2 | 3 | 4
 
 	if (!images || images.length === 0) {
 		return null
@@ -253,11 +256,17 @@ function TipTapGallery({ data, className }: { data: Record<string, unknown>, cla
 				type: 'gallery',
 				data: {
 					images: images.map(img => ({
+						id: img.id,
 						url: img.url,
-						name: img.alt || '',
-						width: img.width,
-						height: img.height
-					})),
+						name: img.alt || img.name,
+						file_name: img.file_name,
+						mime_type: img.mime_type,
+						size: img.size,
+						preview: img.preview,
+						thumb: img.thumb,
+						width: undefined,
+						height: undefined
+					} as GalleryImage)),
 					layout,
 					columns,
 					gap: 'medium',

@@ -4,6 +4,8 @@ import { renderHook, act } from '@testing-library/react'
 import { LocaleProvider, useLocale } from './locale-provider'
 import React from 'react'
 import type { ReactNode } from 'react'
+import type { SupportedLocale } from '@rushcms/types'
+
 
 describe('LocaleProvider', () => {
 	it('should provide default locale', () => {
@@ -65,19 +67,36 @@ describe('LocaleProvider', () => {
 	})
 
 	it('should maintain locale state across multiple useLocale calls', () => {
-		const wrapper = ({ children }: { children: ReactNode }) => (
+		let locale1: SupportedLocale = 'en'
+		let locale2: SupportedLocale = 'en'
+		let setLocaleFunc: ((locale: SupportedLocale) => void) | null = null
+
+		function TestComponent() {
+			const hook1 = useLocale()
+			const hook2 = useLocale()
+			
+			locale1 = hook1.locale
+			locale2 = hook2.locale
+			setLocaleFunc = hook1.setLocale
+			
+			return null
+		}
+
+		render(
 			<LocaleProvider defaultLocale='en' availableLocales={['en', 'pt_BR']}>
-				{children}
+				<TestComponent />
 			</LocaleProvider>
 		)
 
-		const { result: result1 } = renderHook(() => useLocale(), { wrapper })
-		const { result: result2 } = renderHook(() => useLocale(), { wrapper })
+		expect(locale1).toBe('en')
+		expect(locale2).toBe('en')
 
 		act(() => {
-			result1.current.setLocale('pt_BR')
+			setLocaleFunc!('pt_BR')
 		})
 
-		expect(result2.current.locale).toBe('pt_BR')
+		expect(locale1).toBe('pt_BR')
+		expect(locale2).toBe('pt_BR')
 	})
+
 })

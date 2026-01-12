@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ContentRenderer } from './content-renderer'
-import React from 'react'
 import type { Block, TipTapContent } from '@rushcms/types'
+
 
 describe('ContentRenderer', () => {
 	it('should render TipTap content format', () => {
@@ -30,7 +30,20 @@ describe('ContentRenderer', () => {
 			{
 				type: 'richtext',
 				data: {
-					content: '<p>Block Editor Content</p>'
+					content: {
+						type: 'doc',
+						content: [
+							{
+								type: 'paragraph',
+								content: [
+									{
+										type: 'text',
+										text: 'Block Editor Content'
+									}
+								]
+							}
+						]
+					}
 				}
 			}
 		]
@@ -38,6 +51,7 @@ describe('ContentRenderer', () => {
 		render(<ContentRenderer content={content} />)
 		expect(screen.getByText('Block Editor Content')).toBeInTheDocument()
 	})
+
 
 	it('should render null for unknown content format', () => {
 		const { container } = render(<ContentRenderer content={{ invalid: 'content' }} />)
