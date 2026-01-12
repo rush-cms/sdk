@@ -1,6 +1,6 @@
 {
   "name": "@rushcms/client",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "TypeScript API client for RushCMS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -32,10 +32,11 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@rushcms/types": "workspace:*"
+    "@rushcms/types": "2.0.0"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.7.3"
-  }
+  },
+  "gitHead": "d68939deaad7e7061645209169b982874defe128"
 }
