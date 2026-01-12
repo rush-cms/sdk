@@ -5,7 +5,9 @@ import type {
 	Navigation,
 	LinkPage,
 	Homepage,
-	ApiResponse
+	ApiResponse,
+	SupportedLocale,
+	Collection
 } from '@rushcms/types'
 import type { StorageAdapter } from './storage/storage-adapter'
 import { MemoryStorageAdapter } from './storage/memory-adapter'
@@ -21,6 +23,10 @@ export interface RushCMSClientConfig {
 	baseUrl: string
 	apiToken: string
 	siteSlug: string
+	locale?: {
+		default?: SupportedLocale
+		fallback?: SupportedLocale
+	}
 	cache?: {
 		enabled?: boolean
 		ttl?: number
@@ -33,6 +39,10 @@ interface InternalRushCMSClientConfig {
 	baseUrl: string
 	apiToken: string
 	siteSlug: string
+	locale: {
+		default: SupportedLocale
+		fallback: SupportedLocale
+	}
 	cache: {
 		enabled: boolean
 		ttl: number
@@ -43,6 +53,7 @@ interface InternalRushCMSClientConfig {
 
 export class RushCMSClient {
 	private config: InternalRushCMSClientConfig
+	private currentLocale: SupportedLocale
 
 	constructor(config: RushCMSClientConfig) {
 		const cacheConfig = {
@@ -50,14 +61,37 @@ export class RushCMSClient {
 			ttl: config.cache?.ttl ?? 7200
 		}
 
+		const localeConfig = {
+			default: config.locale?.default ?? 'en' as SupportedLocale,
+			fallback: config.locale?.fallback ?? 'en' as SupportedLocale
+		}
+
 		this.config = {
 			baseUrl: config.baseUrl,
 			apiToken: config.apiToken,
 			siteSlug: config.siteSlug,
+			locale: localeConfig,
 			cache: cacheConfig,
 			storage: config.storage || new MemoryStorageAdapter(),
 			debug: config.debug || false
 		}
+
+		this.currentLocale = localeConfig.default
+	}
+
+	/**
+	 * Set the current locale for API requests
+	 */
+	setLocale(locale: SupportedLocale): void {
+		this.currentLocale = locale
+		this.log(`Locale changed to: ${locale}`)
+	}
+
+	/**
+	 * Get the current locale
+	 */
+	getLocale(): SupportedLocale {
+		return this.currentLocale
 	}
 
 	private log(message: string, data?: unknown): void {
@@ -93,6 +127,7 @@ export class RushCMSClient {
 					'Authorization': `Bearer ${this.config.apiToken}`,
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
+					'Accept-Language': this.currentLocale,
 					...(options.headers ?? {})
 				}
 			})
@@ -149,7 +184,7 @@ export class RushCMSClient {
 
 	async getEntries(
 		collection: number | string,
-		params?: EntriesQueryParams
+		params?: EntriesQueryParams & { locale?: SupportedLocale }
 	): Promise<PaginatedResponse<Entry>> {
 		const queryString = new URLSearchParams()
 
@@ -159,9 +194,21 @@ export class RushCMSClient {
 		if (params?.per_page) {
 			queryString.set('per_page', params.per_page.toString())
 		}
+		if (params?.tag) {
+			queryString.set('tag', params.tag)
+		}
 		if (params?.tags) {
 			const tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags
 			queryString.set('tags', tags)
+		}
+		if (params?.category) {
+			queryString.set('category', params.category)
+		}
+		if (params?.categories) {
+			const categories = Array.isArray(params.categories)
+				? params.categories.join(',')
+				: params.categories
+			queryString.set('categories', categories)
 		}
 		if (params?.tag_operator) {
 			queryString.set('tag_operator', params.tag_operator)
@@ -170,40 +217,80 @@ export class RushCMSClient {
 		const endpoint = `/collections/${String(collection)}/entries${queryString.toString() ? `?${queryString}` : ''
 			}`
 
-		return this.request<PaginatedResponse<Entry>>(endpoint)
+		const locale = params?.locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': locale
+		}
+
+		return this.request<PaginatedResponse<Entry>>(endpoint, { headers })
 	}
 
 	async getEntry(
 		collection: number | string,
-		slug: string
+		slug: string,
+		locale?: SupportedLocale
 	): Promise<Entry> {
 		const endpoint = `/collections/${String(collection)}/entries/${slug}`
-		return this.request<Entry>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		const response = await this.request<{ data: Entry }>(endpoint, { headers })
+		return response.data
 	}
 
-	async getHomepage(): Promise<ApiResponse<Homepage>> {
+	async getCollections(locale?: SupportedLocale): Promise<ApiResponse<Collection[]>> {
+		const endpoint = '/collections'
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<Collection[]>>(endpoint, { headers })
+	}
+
+	async getHomepage(locale?: SupportedLocale): Promise<ApiResponse<Homepage>> {
 		const endpoint = '/homepage'
-		return this.request<ApiResponse<Homepage>>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<Homepage>>(endpoint, { headers })
 	}
 
-	async getNavigations(): Promise<ApiResponse<Navigation[]>> {
+	async getNavigations(locale?: SupportedLocale): Promise<ApiResponse<Navigation[]>> {
 		const endpoint = '/navigations'
-		return this.request<ApiResponse<Navigation[]>>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<Navigation[]>>(endpoint, { headers })
 	}
 
-	async getNavigation(key: string): Promise<ApiResponse<Navigation>> {
+	async getNavigation(key: string, locale?: SupportedLocale): Promise<ApiResponse<Navigation>> {
 		const endpoint = `/navigations/${key}`
-		return this.request<ApiResponse<Navigation>>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<Navigation>>(endpoint, { headers })
 	}
 
-	async getLinkPages(): Promise<ApiResponse<LinkPage[]>> {
+	async getLinkPages(locale?: SupportedLocale): Promise<ApiResponse<LinkPage[]>> {
 		const endpoint = '/linkpages'
-		return this.request<ApiResponse<LinkPage[]>>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<LinkPage[]>>(endpoint, { headers })
 	}
 
-	async getLinkPage(key: string): Promise<ApiResponse<LinkPage>> {
+	async getLinkPage(key: string, locale?: SupportedLocale): Promise<ApiResponse<LinkPage>> {
 		const endpoint = `/linkpages/${key}`
-		return this.request<ApiResponse<LinkPage>>(endpoint)
+		const activeLocale = locale || this.currentLocale
+		const headers: HeadersInit = {
+			'Accept-Language': activeLocale
+		}
+		return this.request<ApiResponse<LinkPage>>(endpoint, { headers })
 	}
 
 	async clearCache(): Promise<void> {

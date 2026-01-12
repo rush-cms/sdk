@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Entry } from '@rushcms/types'
+import type { Entry, SupportedLocale } from '@rushcms/types'
 import { useRushCMS } from '../components/providers/rush-cms-provider'
+import { useLocale } from '../components/providers/locale-provider'
 
 interface UseEntryOptions {
 	collectionId: number
 	slug: string
 	enabled?: boolean
+	locale?: SupportedLocale
 }
 
 interface UseEntryResult {
@@ -17,11 +19,19 @@ interface UseEntryResult {
 	refetch: () => Promise<void>
 }
 
-export function useEntry({ collectionId, slug, enabled = true }: UseEntryOptions): UseEntryResult {
+export function useEntry({
+	collectionId,
+	slug,
+	enabled = true,
+	locale: overrideLocale
+}: UseEntryOptions): UseEntryResult {
 	const { client, previewData } = useRushCMS()
+	const { locale: contextLocale } = useLocale()
 	const [entry, setEntry] = useState<Entry | null>(null)
 	const [loading, setLoading] = useState(enabled)
 	const [error, setError] = useState<Error | null>(null)
+
+	const activeLocale = overrideLocale || contextLocale
 
 	const fetchEntry = async () => {
 		if (!enabled) return
@@ -29,7 +39,7 @@ export function useEntry({ collectionId, slug, enabled = true }: UseEntryOptions
 		try {
 			setLoading(true)
 			setError(null)
-			const data = await client.getEntry(collectionId, slug)
+			const data = await client.getEntry(collectionId, slug, activeLocale)
 			setEntry(data)
 		} catch (err) {
 			setError(err instanceof Error ? err : new Error('Unknown error'))
@@ -40,7 +50,7 @@ export function useEntry({ collectionId, slug, enabled = true }: UseEntryOptions
 
 	useEffect(() => {
 		fetchEntry()
-	}, [collectionId, slug, enabled])
+	}, [collectionId, slug, enabled, activeLocale])
 
 	// Live Preview Override
 	// We check if we have preview data for this specific entry (by ID usually, but we might need to match by slug in a real scenario if the preview message sends slug)

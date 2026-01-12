@@ -3,8 +3,10 @@ import type { ImageBlock, GalleryBlock, VideoBlock } from './media'
 import type { YoutubeBlock, EmbedBlock, BookmarkBlock } from './embed'
 import type { AlertBlock, DividerBlock, CodeBlock, ColumnsBlock, ButtonBlock } from './advanced'
 import type { CustomBlock } from './custom'
+import type { TipTapContent } from './tiptap'
 
 export * from './tiptap'
+export * from './tiptap-custom'
 export * from './basic'
 export * from './media'
 export * from './embed'
@@ -28,3 +30,5 @@ export type Block =
 	| ColumnsBlock
 	| ButtonBlock
 	| CustomBlock
+
+export type ContentFormat = Block[] | TipTapContent

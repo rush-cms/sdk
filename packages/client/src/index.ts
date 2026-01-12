@@ -9,3 +9,4 @@ export {
 	RushCMSForbiddenError,
 	RushCMSValidationError
 } from './core/errors'
+export { LocaleUtils } from './utils/locale'

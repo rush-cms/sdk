@@ -2,7 +2,9 @@
 
 import { createContext, useContext } from 'react'
 import { RushCMSClient } from '@rushcms/client'
+import type { SupportedLocale } from '@rushcms/types'
 import { useLivePreview } from '../../hooks/use-live-preview'
+import { LocaleProvider } from './locale-provider'
 
 interface RushCMSContextValue {
 	client: RushCMSClient
@@ -14,14 +16,23 @@ const RushCMSContext = createContext<RushCMSContextValue | null>(null)
 interface RushCMSProviderProps {
 	client: RushCMSClient
 	children: React.ReactNode
+	defaultLocale?: SupportedLocale
+	availableLocales?: SupportedLocale[]
 }
 
-export function RushCMSProvider({ client, children }: RushCMSProviderProps) {
+export function RushCMSProvider({
+	client,
+	children,
+	defaultLocale = 'en',
+	availableLocales = ['en']
+}: RushCMSProviderProps) {
 	const previewData = useLivePreview()
 
 	return (
 		<RushCMSContext.Provider value={{ client, previewData }}>
-			{children}
+			<LocaleProvider defaultLocale={defaultLocale} availableLocales={availableLocales}>
+				{children}
+			</LocaleProvider>
 		</RushCMSContext.Provider>
 	)
 }

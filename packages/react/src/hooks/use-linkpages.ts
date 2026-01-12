@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LinkPage } from '@rushcms/types'
+import type { LinkPage, SupportedLocale } from '@rushcms/types'
 import { useRushCMS } from '../components/providers/rush-cms-provider'
+import { useLocale } from '../components/providers/locale-provider'
 
 interface UseLinkPagesOptions {
 	enabled?: boolean
+	locale?: SupportedLocale
 }
 
 interface UseLinkPagesResult {
@@ -15,11 +17,17 @@ interface UseLinkPagesResult {
 	refetch: () => Promise<void>
 }
 
-export function useLinkPages({ enabled = true }: UseLinkPagesOptions = {}): UseLinkPagesResult {
+export function useLinkPages({
+	enabled = true,
+	locale: overrideLocale
+}: UseLinkPagesOptions = {}): UseLinkPagesResult {
 	const { client } = useRushCMS()
+	const { locale: contextLocale } = useLocale()
 	const [linkPages, setLinkPages] = useState<LinkPage[]>([])
 	const [loading, setLoading] = useState(enabled)
 	const [error, setError] = useState<Error | null>(null)
+
+	const activeLocale = overrideLocale || contextLocale
 
 	const fetchLinkPages = async () => {
 		if (!enabled) return
@@ -27,7 +35,7 @@ export function useLinkPages({ enabled = true }: UseLinkPagesOptions = {}): UseL
 		try {
 			setLoading(true)
 			setError(null)
-			const response = await client.getLinkPages()
+			const response = await client.getLinkPages(activeLocale)
 			setLinkPages(response.data)
 		} catch (err) {
 			setError(err instanceof Error ? err : new Error('Unknown error'))
@@ -38,7 +46,7 @@ export function useLinkPages({ enabled = true }: UseLinkPagesOptions = {}): UseL
 
 	useEffect(() => {
 		fetchLinkPages()
-	}, [enabled])
+	}, [enabled, activeLocale])
 
 	return {
 		linkPages,

@@ -45,6 +45,8 @@ export interface Tag {
 	id: number
 	name: string
 	slug: string
+	type?: 'tag' | 'category'
+	entries_count?: number
 }
 
 export interface EntryMeta {
@@ -57,6 +59,9 @@ export interface EntryMeta {
 export interface EntriesQueryParams {
 	page?: number
 	per_page?: number
+	tag?: string
 	tags?: string | string[]
+	category?: string
+	categories?: string | string[]
 	tag_operator?: 'any' | 'all'
 }

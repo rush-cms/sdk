@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Navigation } from '@rushcms/types'
+import type { Navigation, SupportedLocale } from '@rushcms/types'
 import { useRushCMS } from '../components/providers/rush-cms-provider'
+import { useLocale } from '../components/providers/locale-provider'
 
 interface UseNavigationOptions {
 	key: string
 	enabled?: boolean
+	locale?: SupportedLocale
 }
 
 interface UseNavigationResult {
@@ -16,11 +18,18 @@ interface UseNavigationResult {
 	refetch: () => Promise<void>
 }
 
-export function useNavigation({ key, enabled = true }: UseNavigationOptions): UseNavigationResult {
+export function useNavigation({
+	key,
+	enabled = true,
+	locale: overrideLocale
+}: UseNavigationOptions): UseNavigationResult {
 	const { client } = useRushCMS()
+	const { locale: contextLocale } = useLocale()
 	const [navigation, setNavigation] = useState<Navigation | null>(null)
 	const [loading, setLoading] = useState(enabled)
 	const [error, setError] = useState<Error | null>(null)
+
+	const activeLocale = overrideLocale || contextLocale
 
 	const fetchNavigation = async () => {
 		if (!enabled || !key) return
@@ -28,7 +37,7 @@ export function useNavigation({ key, enabled = true }: UseNavigationOptions): Us
 		try {
 			setLoading(true)
 			setError(null)
-			const response = await client.getNavigation(key)
+			const response = await client.getNavigation(key, activeLocale)
 			setNavigation(response.data)
 		} catch (err) {
 			setError(err instanceof Error ? err : new Error('Unknown error'))
@@ -39,7 +48,7 @@ export function useNavigation({ key, enabled = true }: UseNavigationOptions): Us
 
 	useEffect(() => {
 		fetchNavigation()
-	}, [key, enabled])
+	}, [key, enabled, activeLocale])
 
 	return {
 		navigation,

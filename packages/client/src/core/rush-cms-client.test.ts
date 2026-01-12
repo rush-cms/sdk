@@ -135,4 +135,98 @@ describe('RushCMSClient', () => {
         await client.getEntries(1)
         expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('[RushCMS]'), expect.anything())
     })
+
+    describe('Locale functionality', () => {
+        it('should use default locale from config', () => {
+            client = new RushCMSClient({
+                ...mockConfig,
+                locale: {
+                    default: 'pt_BR',
+                    fallback: 'en'
+                }
+            })
+
+            expect(client.getLocale()).toBe('pt_BR')
+        })
+
+        it('should default to "en" if no locale config provided', () => {
+            expect(client.getLocale()).toBe('en')
+        })
+
+        it('should set and get locale', () => {
+            client.setLocale('pt_BR')
+            expect(client.getLocale()).toBe('pt_BR')
+
+            client.setLocale('es')
+            expect(client.getLocale()).toBe('es')
+        })
+
+        it('should send Accept-Language header with current locale', async () => {
+            client.setLocale('pt_BR')
+
+            vi.mocked(fetch).mockResolvedValue({
+                ok: true,
+                json: async () => ({ data: [] }),
+                status: 200
+            } as Response)
+
+            await client.getEntries(1)
+
+            expect(fetch).toHaveBeenCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        'Accept-Language': 'pt_BR'
+                    })
+                })
+            )
+        })
+
+        it('should update Accept-Language header when locale changes', async () => {
+            vi.mocked(fetch).mockResolvedValue({
+                ok: true,
+                json: async () => ({ data: [] }),
+                status: 200
+            } as Response)
+
+            client.setLocale('en')
+            await client.getEntries(1)
+
+            expect(fetch).toHaveBeenLastCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        'Accept-Language': 'en'
+                    })
+                })
+            )
+
+            client.setLocale('pt_BR')
+            await client.getEntries(1)
+
+            expect(fetch).toHaveBeenLastCalledWith(
+                expect.any(String),
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        'Accept-Language': 'pt_BR'
+                    })
+                })
+            )
+        })
+
+        it('should log locale change when debug is enabled', () => {
+            const consoleSpy = vi.spyOn(console, 'log')
+            client = new RushCMSClient({
+                ...mockConfig,
+                debug: true
+            })
+
+            client.setLocale('pt_BR')
+
+            expect(consoleSpy).toHaveBeenCalledWith(
+                expect.stringContaining('[RushCMS] Locale changed to: pt_BR'),
+                expect.anything()
+            )
+        })
+    })
 })

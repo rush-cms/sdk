@@ -1,3 +1,5 @@
+import type { LocaleAwareResponse } from './locale'
+
 export interface NavigationItem {
 	id: string
 	title: string
@@ -14,10 +16,10 @@ export interface NavigationItem {
 		slug: string
 		title: string
 	}
-	children: NavigationItem[]
+	children?: NavigationItem[]
 }
 
-export interface Navigation {
+export interface Navigation extends LocaleAwareResponse {
 	id: number
 	name: string
 	key: string

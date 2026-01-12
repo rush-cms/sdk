@@ -1,7 +1,8 @@
 import type { Author, FeaturedImage, Tag, EntryMeta } from './responses'
-import type { Block } from '../blocks'
+import type { ContentFormat } from '../blocks'
+import type { LocaleAwareResponse } from './locale'
 
-export interface Entry {
+export interface Entry extends LocaleAwareResponse {
 	id: number
 	author: Author
 	title: string
@@ -9,15 +10,12 @@ export interface Entry {
 	excerpt: string
 	featured_image: FeaturedImage | null
 	data: {
-		content: Block[]
-		author_bio?: string
-		reading_time?: number
+		content?: ContentFormat
 		[key: string]: unknown
 	}
 	status: 'published' | 'draft'
 	published_at: string
-	created_at: string
-	updated_at: string
 	meta: EntryMeta
 	tags: Tag[]
+	categories: Tag[]
 }

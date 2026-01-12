@@ -1,3 +1,5 @@
+import type { LocaleAwareResponse } from './locale'
+
 export type LinkPageDisplayMode = 'icon' | 'icon_text' | 'text'
 
 export type LinkPageIcon =
@@ -54,7 +56,7 @@ export interface LinkPageSettings {
 	text_color?: string | null
 }
 
-export interface LinkPage {
+export interface LinkPage extends LocaleAwareResponse {
 	id: number
 	key: string
 	title: string

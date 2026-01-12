@@ -1,6 +1,6 @@
 {
   "name": "@rushcms/react",
-  "version": "0.1.8",
+  "version": "2.0.0",
   "description": "React components and hooks for RushCMS",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
