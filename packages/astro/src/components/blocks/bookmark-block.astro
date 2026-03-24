@@ -1,0 +1,48 @@
+---
+import type { BookmarkBlock } from '@rushcms/types'
+
+interface Props {
+	block: BookmarkBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+---
+
+<a
+	href={block.data.url}
+	target='_blank'
+	rel='noopener noreferrer'
+	class:list={[
+		'flex gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors no-underline',
+		className
+	]}
+>
+	<div class='flex-1 min-w-0'>
+		<h3 class='font-semibold text-gray-900 mb-1 truncate'>
+			{block.data.title}
+		</h3>
+		{block.data.description && (
+			<p class='text-sm text-gray-600 line-clamp-2 mb-2'>
+				{block.data.description}
+			</p>
+		)}
+		<div class='flex items-center gap-2 text-xs text-gray-500'>
+			{block.data.favicon && (
+				<img src={block.data.favicon} alt='' class='w-4 h-4' />
+			)}
+			{block.data.site_name && (
+				<span>{block.data.site_name}</span>
+			)}
+		</div>
+	</div>
+	{block.data.image && (
+		<div class='flex-shrink-0 w-32 h-24'>
+			<img
+				src={block.data.image}
+				alt={block.data.title}
+				class='w-full h-full object-cover rounded'
+			/>
+		</div>
+	)}
+</a>

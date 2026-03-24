@@ -1,0 +1,17 @@
+---
+import type { Block } from '@rushcms/types'
+import BlockRenderer from './block-renderer.astro'
+
+interface Props {
+	blocks: Block[]
+	class?: string
+}
+
+const { blocks, class: className } = Astro.props
+---
+
+<div class:list={['blocks-renderer', className]}>
+	{blocks.map((block) => (
+		<BlockRenderer block={block} />
+	))}
+</div>

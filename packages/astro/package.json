@@ -1,0 +1,38 @@
+{
+	"name": "@rushcms/astro",
+	"version": "1.0.0",
+	"description": "Astro components and utilities for RushCMS",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./components/*": "./src/components/*"
+	},
+	"scripts": {
+		"build": "tsup src/index.ts --format esm --dts",
+		"dev": "tsup src/index.ts --format esm --dts --watch",
+		"clean": "rm -rf dist",
+		"lint": "eslint src --ext .ts"
+	},
+	"keywords": [
+		"rushcms",
+		"astro",
+		"cms",
+		"components"
+	],
+	"license": "MIT",
+	"dependencies": {
+		"@rushcms/types": "workspace:*"
+	},
+	"peerDependencies": {
+		"astro": ">=5.0.0"
+	},
+	"devDependencies": {
+		"tsup": "^8.3.5",
+		"typescript": "^5.7.3"
+	}
+}

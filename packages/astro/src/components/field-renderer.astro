@@ -1,0 +1,66 @@
+---
+import type { CollectionField } from '@rushcms/types'
+import ContentRenderer from './content-renderer.astro'
+
+interface Props {
+	value: unknown
+	field: CollectionField
+	class?: string
+}
+
+const { value, field, class: className } = Astro.props
+
+if (value === null || value === undefined) return null
+
+const fieldType = field.type
+const label = field.data.config.label || field.data.config.name
+---
+
+{fieldType === 'content-editor' && (
+	<div class={className}>
+		<ContentRenderer content={value} />
+	</div>
+)}
+
+{fieldType === 'markdown' && typeof value === 'string' && (
+	<div class={className}>
+		<ContentRenderer content={value} />
+	</div>
+)}
+
+{fieldType === 'text' && typeof value === 'string' && (
+	<p class={className}>{value}</p>
+)}
+
+{fieldType === 'textarea' && typeof value === 'string' && (
+	<div class:list={['whitespace-pre-wrap', className]}>{value}</div>
+)}
+
+{fieldType === 'image' && typeof value === 'string' && (
+	<figure class={className}>
+		<img src={value} alt={label} class='w-full h-auto rounded-lg' loading='lazy' />
+	</figure>
+)}
+
+{fieldType === 'gallery' && Array.isArray(value) && (
+	<div class:list={['grid grid-cols-2 md:grid-cols-3 gap-4', className]}>
+		{(value as Array<{ url: string; name?: string }>).map((img) => (
+			<figure>
+				<img
+					src={img.url}
+					alt={img.name || ''}
+					class='w-full h-auto object-cover rounded-lg'
+					loading='lazy'
+				/>
+			</figure>
+		))}
+	</div>
+)}
+
+{fieldType === 'list' && Array.isArray(value) && (
+	<ul class={className}>
+		{(value as string[]).map((item) => (
+			<li>{item}</li>
+		))}
+	</ul>
+)}

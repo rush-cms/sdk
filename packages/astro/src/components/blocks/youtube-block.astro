@@ -1,0 +1,48 @@
+---
+import type { YoutubeBlock } from '@rushcms/types'
+import { getYoutubeVideoId, buildYoutubeEmbedUrl } from '../../utils/youtube'
+
+interface Props {
+	block: YoutubeBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+const videoId = getYoutubeVideoId(block.data.url)
+
+const embedUrl = videoId
+	? buildYoutubeEmbedUrl(videoId, {
+		autoplay: block.data.autoplay,
+		controls: block.data.controls,
+		startTime: block.data.start_time
+	})
+	: null
+
+const aspectStyle = block.data.aspect_ratio !== 'auto'
+	? `aspect-ratio: ${block.data.aspect_ratio}`
+	: 'aspect-ratio: 16/9'
+---
+
+{!videoId ? (
+	<div class:list={['p-4 bg-red-50 border border-red-200 rounded-lg', className]}>
+		<p class='text-red-800'>Invalid YouTube URL</p>
+	</div>
+) : (
+	<figure class:list={['w-full max-w-4xl mx-auto', className]}>
+		<div class='relative overflow-hidden rounded-lg' style={aspectStyle}>
+			<iframe
+				src={embedUrl}
+				title={block.data.title || 'YouTube video'}
+				allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+				allowfullscreen
+				class='absolute inset-0 w-full h-full'
+			/>
+		</div>
+		{block.data.title && (
+			<figcaption class='text-sm text-gray-600 mt-2 text-center'>
+				{block.data.title}
+			</figcaption>
+		)}
+	</figure>
+)}

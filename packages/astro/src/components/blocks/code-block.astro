@@ -1,0 +1,45 @@
+---
+import type { CodeBlock } from '@rushcms/types'
+
+interface Props {
+	block: CodeBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+if (!block.data.code) return null
+
+function escapeHtml(text: string): string {
+	const map: Record<string, string> = {
+		'&': '&amp;',
+		'<': '&lt;',
+		'>': '&gt;',
+		'"': '&quot;',
+		"'": '&#039;'
+	}
+	return text.replace(/[&<>"']/g, char => map[char] || char)
+}
+
+const langClass = block.data.language ? `language-${block.data.language}` : ''
+const escapedCode = escapeHtml(block.data.code)
+---
+
+<div class:list={[
+	'code-block relative rounded-lg overflow-hidden my-6 shadow-xl border border-gray-700',
+	className
+]}>
+	{(block.data.filename || block.data.language) && (
+		<div class='code-block-header px-4 py-3 text-sm border-b border-gray-700 flex items-center justify-between bg-[#1e1e1e] text-gray-300'>
+			<span class='code-block-filename font-medium'>{block.data.filename}</span>
+			{block.data.language && (
+				<span class='code-block-language text-xs px-2.5 py-1 rounded font-mono uppercase tracking-wider font-semibold bg-gray-700 text-gray-300'>
+					{block.data.language}
+				</span>
+			)}
+		</div>
+	)}
+	<div class='code-block-content overflow-x-auto'>
+		<pre class='m-0 p-4 bg-[#1e1e1e] text-sm leading-relaxed'><code class={langClass} set:html={escapedCode} /></pre>
+	</div>
+</div>

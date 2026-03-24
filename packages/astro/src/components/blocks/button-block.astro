@@ -1,0 +1,48 @@
+---
+import type { ButtonBlock } from '@rushcms/types'
+
+interface Props {
+	block: ButtonBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+const variantStyles: Record<string, string> = {
+	primary: 'bg-blue-600 text-white hover:bg-blue-700',
+	secondary: 'bg-gray-600 text-white hover:bg-gray-700',
+	outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
+	ghost: 'text-blue-600 hover:bg-blue-50'
+}
+
+const sizeStyles: Record<string, string> = {
+	small: 'px-4 py-2 text-sm',
+	medium: 'px-6 py-3 text-base',
+	large: 'px-8 py-4 text-lg'
+}
+
+const variantClass = variantStyles[block.data.variant] || variantStyles.primary
+const sizeClass = sizeStyles[block.data.size] || sizeStyles.medium
+---
+
+<div class:list={['my-6', { 'w-full': block.data.full_width }, className]}>
+	<a
+		href={block.data.url}
+		target={block.data.open_in_new_tab ? '_blank' : undefined}
+		rel={block.data.open_in_new_tab ? 'noopener noreferrer' : undefined}
+		class:list={[
+			'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors no-underline',
+			variantClass,
+			sizeClass,
+			{ 'w-full': block.data.full_width }
+		]}
+	>
+		{block.data.icon && block.data.icon_position === 'left' && (
+			<span>{block.data.icon}</span>
+		)}
+		<span>{block.data.text}</span>
+		{block.data.icon && block.data.icon_position === 'right' && (
+			<span>{block.data.icon}</span>
+		)}
+	</a>
+</div>

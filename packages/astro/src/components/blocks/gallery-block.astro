@@ -1,0 +1,95 @@
+---
+import type { GalleryBlock } from '@rushcms/types'
+
+interface Props {
+	block: GalleryBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+if (!block.data.images || block.data.images.length === 0) return null
+
+const layoutString = (block.data.layout || 'grid').toString().toLowerCase()
+const layoutMatch = layoutString.match(/^(grid|masonry|carousel|slider)(?:-(\d+))?$/)
+
+const layout = (layoutMatch?.[1] || 'grid') as 'grid' | 'masonry' | 'carousel' | 'slider'
+const columnsFromLayout = layoutMatch?.[2] ? Number(layoutMatch[2]) : undefined
+const columns = columnsFromLayout || Number(block.data.columns) || 3
+const safeColumns = (columns === 2 || columns === 3 || columns === 4) ? columns : 3
+
+const gapStyles: Record<string, string> = {
+	small: 'gap-2',
+	medium: 'gap-4',
+	large: 'gap-6'
+}
+
+const borderRadiusStyles: Record<string, string> = {
+	none: 'rounded-none',
+	small: 'rounded-sm',
+	medium: 'rounded-md',
+	large: 'rounded-lg',
+	full: 'rounded-full'
+}
+
+const gapClass = gapStyles[block.data.gap] || 'gap-4'
+const borderRadiusClass = borderRadiusStyles[block.data.border_radius] || 'rounded-none'
+
+const gridColsMap: Record<number, string> = {
+	2: 'grid grid-cols-2',
+	3: 'grid grid-cols-2 md:grid-cols-3',
+	4: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+}
+
+const isSlider = layout === 'slider' || layout === 'carousel'
+const isMasonry = layout === 'masonry'
+
+const containerClasses = isSlider
+	? `flex overflow-x-auto snap-x snap-mandatory ${gapClass}`
+	: isMasonry
+		? `columns-2 md:columns-3 lg:columns-4 ${gapClass.replace('gap-', 'gap-x-')}`
+		: `${gridColsMap[safeColumns]} ${gapClass}`
+
+const imageStyle = block.data.aspect_ratio !== 'auto'
+	? `aspect-ratio: ${block.data.aspect_ratio}`
+	: undefined
+---
+
+<div
+	class:list={['w-full gallery-block', containerClasses, className]}
+	data-lightbox-gallery={block.data.lightbox ? 'true' : undefined}
+>
+	{block.data.images.map((image) => (
+		<figure class:list={[{
+			'break-inside-avoid mb-4': isMasonry,
+			'flex-shrink-0 snap-center w-4/5 md:w-1/2': isSlider
+		}]}>
+			<a
+				href={block.data.lightbox ? image.url : undefined}
+				data-pswp-width={block.data.lightbox ? (image.width || 1200) : undefined}
+				data-pswp-height={block.data.lightbox ? (image.height || 800) : undefined}
+				class={block.data.lightbox ? 'cursor-pointer' : undefined}
+			>
+				<img
+					src={image.url}
+					alt={image.name || ''}
+					class:list={[
+						'w-full h-auto object-cover',
+						borderRadiusClass,
+						{ 'hover:opacity-90 transition-opacity': block.data.lightbox }
+					]}
+					style={imageStyle}
+					loading='lazy'
+				/>
+			</a>
+			{block.data.show_captions && image.name && (
+				<figcaption class='text-sm text-gray-600 mt-1 text-center'>
+					{image.name}
+				</figcaption>
+			)}
+		</figure>
+	))}
+</div>
+{block.data.caption && (
+	<p class='text-sm text-gray-600 mt-2 text-center'>{block.data.caption}</p>
+)}

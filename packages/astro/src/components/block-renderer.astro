@@ -1,0 +1,42 @@
+---
+import type { Block } from '@rushcms/types'
+
+import RichTextBlock from './blocks/rich-text-block.astro'
+import CalloutBlock from './blocks/callout-block.astro'
+import ToggleBlock from './blocks/toggle-block.astro'
+import QuoteBlock from './blocks/quote-block.astro'
+import ImageBlock from './blocks/image-block.astro'
+import GalleryBlock from './blocks/gallery-block.astro'
+import VideoBlock from './blocks/video-block.astro'
+import YoutubeBlock from './blocks/youtube-block.astro'
+import EmbedBlock from './blocks/embed-block.astro'
+import BookmarkBlock from './blocks/bookmark-block.astro'
+import CodeBlock from './blocks/code-block.astro'
+import AlertBlock from './blocks/alert-block.astro'
+import DividerBlock from './blocks/divider-block.astro'
+import ColumnsBlock from './blocks/columns-block.astro'
+import ButtonBlock from './blocks/button-block.astro'
+
+interface Props {
+	block: Block
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+---
+
+{block.type === 'richtext' && <RichTextBlock block={block} class={className} />}
+{block.type === 'callout' && <CalloutBlock block={block} class={className} />}
+{block.type === 'toggle' && <ToggleBlock block={block} class={className} />}
+{block.type === 'quote' && <QuoteBlock block={block} class={className} />}
+{block.type === 'image' && <ImageBlock block={block} class={className} />}
+{block.type === 'gallery' && <GalleryBlock block={block} class={className} />}
+{block.type === 'video' && <VideoBlock block={block} class={className} />}
+{block.type === 'youtube' && <YoutubeBlock block={block} class={className} />}
+{block.type === 'embed' && <EmbedBlock block={block} class={className} />}
+{block.type === 'bookmark' && <BookmarkBlock block={block} class={className} />}
+{block.type === 'code' && <CodeBlock block={block} class={className} />}
+{block.type === 'alert' && <AlertBlock block={block} class={className} />}
+{block.type === 'divider' && <DividerBlock block={block} class={className} />}
+{block.type === 'columns' && <ColumnsBlock block={block} class={className} />}
+{block.type === 'button' && <ButtonBlock block={block} class={className} />}

@@ -1,0 +1,27 @@
+---
+import type { DividerBlock } from '@rushcms/types'
+
+interface Props {
+	block: DividerBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+const styleClasses: Record<string, string> = {
+	solid: 'border-solid',
+	dashed: 'border-dashed',
+	dotted: 'border-dotted'
+}
+
+const spacingClasses: Record<string, string> = {
+	small: 'my-4',
+	medium: 'my-8',
+	large: 'my-12'
+}
+
+const styleClass = styleClasses[block.data.style] || 'border-solid'
+const spacingClass = spacingClasses[block.data.spacing] || 'my-8'
+---
+
+<hr class:list={['border-gray-300', styleClass, spacingClass, className]} />

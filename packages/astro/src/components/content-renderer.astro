@@ -1,0 +1,28 @@
+---
+import type { Block, TipTapContent } from '@rushcms/types'
+import { detectContentFormat } from '../utils/content-format'
+import { markdownToHtml } from '../utils/markdown'
+import BlocksRenderer from './blocks-renderer.astro'
+import TiptapRenderer from './tiptap-renderer.astro'
+
+interface Props {
+	content: unknown
+	class?: string
+}
+
+const { content, class: className } = Astro.props
+
+const format = detectContentFormat(content)
+---
+
+{format === 'blocks' && (
+	<BlocksRenderer blocks={content as Block[]} class={className} />
+)}
+
+{format === 'tiptap' && (
+	<TiptapRenderer content={content as TipTapContent} class={className} />
+)}
+
+{format === 'unknown' && typeof content === 'string' && (
+	<div class:list={['markdown-content', className]} set:html={markdownToHtml(content)} />
+)}

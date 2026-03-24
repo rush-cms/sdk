@@ -1,0 +1,17 @@
+---
+import type { RichTextBlock } from '@rushcms/types'
+import { tiptapToHtml } from '../../utils/tiptap-to-html'
+
+interface Props {
+	block: RichTextBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+if (!block.data.content) return null
+
+const html = tiptapToHtml(block.data.content)
+---
+
+<div class:list={['rich-text-block', className]} set:html={html} />

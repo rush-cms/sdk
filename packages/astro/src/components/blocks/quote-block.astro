@@ -1,0 +1,66 @@
+---
+import type { QuoteBlock, TipTapContent } from '@rushcms/types'
+import { tiptapToHtml } from '../../utils/tiptap-to-html'
+
+interface Props {
+	block: QuoteBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+function isRichText(value: unknown): value is TipTapContent {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'type' in value &&
+		(value as { type: string }).type === 'doc' &&
+		'content' in value &&
+		Array.isArray((value as { content: unknown[] }).content)
+	)
+}
+
+const quoteContent = block.data.quote
+const quoteHtml = isRichText(quoteContent) ? tiptapToHtml(quoteContent) : null
+---
+
+<blockquote class:list={['border-l-4 border-gray-300 pl-6 py-2 my-6', className]}>
+	<div class='text-lg italic text-gray-700 mb-3'>
+		{quoteHtml ? (
+			<div set:html={quoteHtml} />
+		) : (
+			<p>{quoteContent}</p>
+		)}
+	</div>
+	{(block.data.author || block.data.author_title) && (
+		<footer class='flex items-center gap-3'>
+			{block.data.author_image && (
+				<img
+					src={block.data.author_image}
+					alt={block.data.author || ''}
+					class='w-12 h-12 rounded-full object-cover'
+				/>
+			)}
+			<div>
+				{block.data.author && (
+					<cite class='font-medium text-gray-900 not-italic block'>
+						{block.data.author}
+					</cite>
+				)}
+				{block.data.author_title && (
+					<span class='text-sm text-gray-600'>{block.data.author_title}</span>
+				)}
+			</div>
+		</footer>
+	)}
+	{block.data.source_url && (
+		<a
+			href={block.data.source_url}
+			target='_blank'
+			rel='noopener noreferrer'
+			class='text-sm text-blue-600 hover:underline mt-2 inline-block'
+		>
+			View source
+		</a>
+	)}
+</blockquote>

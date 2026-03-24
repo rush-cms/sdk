@@ -1,0 +1,25 @@
+---
+import type { ToggleBlock } from '@rushcms/types'
+import { tiptapToHtml } from '../../utils/tiptap-to-html'
+
+interface Props {
+	block: ToggleBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+if (!block.data.content) return null
+
+const html = tiptapToHtml(block.data.content)
+---
+
+<details
+	class:list={['border border-gray-200 rounded-lg overflow-hidden', className]}
+	open={block.data.open_by_default || undefined}
+>
+	<summary class='px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer font-medium text-gray-900'>
+		{block.data.title}
+	</summary>
+	<div class='px-4 py-3 border-t border-gray-200' set:html={html} />
+</details>

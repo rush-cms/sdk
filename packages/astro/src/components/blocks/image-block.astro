@@ -1,0 +1,87 @@
+---
+import type { ImageBlock } from '@rushcms/types'
+
+interface Props {
+	block: ImageBlock
+	class?: string
+}
+
+const { block, class: className } = Astro.props
+
+if (!block.data.image) return null
+
+const alignmentStyles: Record<string, string> = {
+	left: 'mr-auto',
+	center: 'mx-auto',
+	right: 'ml-auto',
+	wide: 'w-full max-w-5xl mx-auto',
+	full: 'w-full'
+}
+
+const sizeStyles: Record<string, string> = {
+	small: 'max-w-sm',
+	medium: 'max-w-2xl',
+	large: 'max-w-4xl',
+	original: 'max-w-none'
+}
+
+const borderRadiusStyles: Record<string, string> = {
+	none: 'rounded-none',
+	small: 'rounded-sm',
+	medium: 'rounded-md',
+	large: 'rounded-lg',
+	full: 'rounded-full'
+}
+
+const alignmentClass = alignmentStyles[block.data.alignment] || ''
+const sizeClass = sizeStyles[block.data.size] || ''
+const borderRadiusClass = borderRadiusStyles[block.data.border_radius] || ''
+
+const imageStyle = block.data.aspect_ratio !== 'auto'
+	? `aspect-ratio: ${block.data.aspect_ratio}`
+	: undefined
+---
+
+<figure class:list={[alignmentClass, sizeClass, className]}>
+	{block.data.link ? (
+		<a
+			href={block.data.link}
+			target={block.data.link_new_tab ? '_blank' : undefined}
+			rel={block.data.link_new_tab ? 'noopener noreferrer' : undefined}
+		>
+			<img
+				src={block.data.image}
+				alt={block.data.alt || ''}
+				class:list={[
+					'w-full h-auto object-cover',
+					borderRadiusClass,
+					{ 'shadow-lg': block.data.shadow }
+				]}
+				loading={block.data.lazy_loading ? 'lazy' : undefined}
+				style={imageStyle}
+			/>
+		</a>
+	) : (
+		<img
+			src={block.data.image}
+			alt={block.data.alt || ''}
+			class:list={[
+				'w-full h-auto object-cover',
+				borderRadiusClass,
+				{
+					'shadow-lg': block.data.shadow,
+					'cursor-pointer': block.data.lightbox
+				}
+			]}
+			loading={block.data.lazy_loading ? 'lazy' : undefined}
+			style={imageStyle}
+			data-lightbox={block.data.lightbox ? 'true' : undefined}
+			data-lightbox-src={block.data.lightbox ? block.data.image : undefined}
+		/>
+	)}
+	{block.data.caption && (
+		<figcaption class='text-sm text-gray-600 mt-2 text-center'>
+			{block.data.caption}
+		</figcaption>
+	)}
+</figure>

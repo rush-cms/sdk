@@ -1,0 +1,15 @@
+---
+import type { TipTapContent } from '@rushcms/types'
+import { tiptapToHtml } from '../utils/tiptap-to-html'
+
+interface Props {
+	content: TipTapContent
+	class?: string
+}
+
+const { content, class: className } = Astro.props
+
+const html = tiptapToHtml(content)
+---
+
+<div class:list={['tiptap-content', className]} set:html={html} />

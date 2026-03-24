@@ -1,0 +1,78 @@
+---
+interface Props {
+	selector?: string
+	gallerySelector?: string
+}
+
+const {
+	selector = '[data-lightbox="true"]',
+	gallerySelector = '[data-lightbox-gallery="true"]'
+} = Astro.props
+---
+
+<script define:vars={{ selector, gallerySelector }}>
+	async function initLightbox() {
+		const images = document.querySelectorAll(selector)
+		const galleries = document.querySelectorAll(gallerySelector)
+
+		if (images.length === 0 && galleries.length === 0) return
+
+		const PhotoSwipeLightbox = (await import('photoswipe/lightbox')).default
+		await import('photoswipe/style.css')
+
+		if (images.length > 0) {
+			const lightbox = new PhotoSwipeLightbox({
+				pswpModule: () => import('photoswipe'),
+				zoom: true,
+				loop: true,
+				pinchToClose: true,
+				escKey: true,
+				arrowKeys: true,
+				padding: { top: 20, bottom: 20, left: 20, right: 20 }
+			})
+
+			images.forEach((img) => {
+				img.addEventListener('click', () => {
+					const src = img.getAttribute('data-lightbox-src') || img.getAttribute('src')
+					const alt = img.getAttribute('alt') || ''
+
+					const tempGallery = new PhotoSwipeLightbox({
+						pswpModule: () => import('photoswipe'),
+						dataSource: [{
+							src: src,
+							w: img.naturalWidth || 1200,
+							h: img.naturalHeight || 800,
+							alt: alt
+						}]
+					})
+					tempGallery.init()
+					tempGallery.loadAndOpen(0)
+				})
+			})
+
+			lightbox.init()
+		}
+
+		galleries.forEach((gallery) => {
+			const galleryLightbox = new PhotoSwipeLightbox({
+				gallery: gallery,
+				children: 'a',
+				pswpModule: () => import('photoswipe'),
+				zoom: true,
+				loop: true,
+				counter: true,
+				pinchToClose: true,
+				escKey: true,
+				arrowKeys: true,
+				padding: { top: 20, bottom: 20, left: 20, right: 20 }
+			})
+			galleryLightbox.init()
+		})
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', initLightbox)
+	} else {
+		initLightbox()
+	}
+</script>
