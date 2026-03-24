@@ -30,12 +30,13 @@ const config = {
 ## CORE STACK
 - **Monorepo Manager**: Turbo + Lerna
 - **Package Manager**: pnpm
-- **Languages**: TypeScript, React
+- **Languages**: TypeScript, Astro
 - **Bundler**: tsup (for libraries)
 - **Packages**:
   - `@rushcms/client`: The core JS/TS client
-  - `@rushcms/react`: React hooks and components
+  - `@rushcms/astro`: Astro components and utilities (server-side rendering)
   - `@rushcms/types`: Shared type definitions
+  - `@rushcms/cli`: CLI for project scaffolding and codegen
 
 ## COMMANDS
 

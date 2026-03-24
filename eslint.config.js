@@ -1,23 +1,17 @@
 import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import reactPlugin from 'eslint-plugin-react'
-import reactHooksPlugin from 'eslint-plugin-react-hooks'
 
 export default tseslint.config(
 	js.configs.recommended,
 	...tseslint.configs.strictTypeChecked,
 	...tseslint.configs.stylisticTypeChecked,
 	{
-		files: ['**/*.ts', '**/*.tsx'],
+		files: ['**/*.ts'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
 				tsconfigRootDir: import.meta.dirname
 			}
-		},
-		plugins: {
-			react: reactPlugin,
-			'react-hooks': reactHooksPlugin
 		},
 		rules: {
 			'quotes': ['error', 'single', { avoidEscape: true }],
@@ -30,16 +24,7 @@ export default tseslint.config(
 			'@typescript-eslint/explicit-function-return-type': 'off',
 			'@typescript-eslint/explicit-module-boundary-types': 'off',
 			'@typescript-eslint/no-explicit-any': 'error',
-			'@typescript-eslint/no-non-null-assertion': 'warn',
-			'react/react-in-jsx-scope': 'off',
-			'react/prop-types': 'off',
-			'react-hooks/rules-of-hooks': 'error',
-			'react-hooks/exhaustive-deps': 'warn'
-		},
-		settings: {
-			react: {
-				version: 'detect'
-			}
+			'@typescript-eslint/no-non-null-assertion': 'warn'
 		}
 	},
 	{
@@ -48,7 +33,6 @@ export default tseslint.config(
 			'**/node_modules/**',
 			'**/.turbo/**',
 			'**/coverage/**',
-			'examples/**',
 			'**/*.config.js',
 			'**/*.config.ts'
 		]
