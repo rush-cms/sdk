@@ -90,6 +90,7 @@ export class RushCMSClient {
 
 	setLocale(locale: SupportedLocale): void {
 		this.currentLocale = locale
+		this.log(`Locale changed to: ${locale}`)
 	}
 
 	getLocale(): SupportedLocale {
@@ -134,7 +135,7 @@ export class RushCMSClient {
 		const skipCache = overrides?.skipCache || false
 		const method = options.method || 'GET'
 		const url = this.buildUrl(endpoint, withSlug)
-		const cacheKey = `${url}${JSON.stringify(options.body || '')}`
+		const cacheKey = `${url}:${locale}${JSON.stringify(options.body || '')}`
 		const canCache = this.config.cache.enabled && method === 'GET' && !skipCache
 
 		this.log(`${method} ${endpoint}`)
