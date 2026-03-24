@@ -29,7 +29,13 @@
 		"@rushcms/types": "workspace:*"
 	},
 	"peerDependencies": {
-		"astro": ">=5.0.0"
+		"astro": ">=5.0.0",
+		"photoswipe": ">=5.4.0"
+	},
+	"peerDependenciesMeta": {
+		"photoswipe": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"tsup": "^8.3.5",
