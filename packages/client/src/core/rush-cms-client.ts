@@ -7,7 +7,17 @@ import type {
 	Homepage,
 	ApiResponse,
 	SupportedLocale,
-	Collection
+	Collection,
+	Tag,
+	Form,
+	FormSubmitPayload,
+	FormSubmitResponse,
+	SearchIndexEntry,
+	SearchIndexParams,
+	Member,
+	MemberUpdatePayload,
+	MembersQueryParams,
+	Team
 } from '@rushcms/types'
 import type { StorageAdapter } from './storage/storage-adapter'
 import { MemoryStorageAdapter } from './storage/memory-adapter'
@@ -29,13 +39,14 @@ export interface RushCMSClientConfig {
 	}
 	cache?: {
 		enabled?: boolean
-		ttl?: number
+		freshTtl?: number
+		staleTtl?: number
 	}
 	storage?: StorageAdapter
 	debug?: boolean
 }
 
-interface InternalRushCMSClientConfig {
+interface InternalConfig {
 	baseUrl: string
 	apiToken: string
 	siteSlug: string
@@ -45,51 +56,42 @@ interface InternalRushCMSClientConfig {
 	}
 	cache: {
 		enabled: boolean
-		ttl: number
+		freshTtl: number
+		staleTtl: number
 	}
 	storage: StorageAdapter
 	debug: boolean
 }
 
 export class RushCMSClient {
-	private config: InternalRushCMSClientConfig
+	private config: InternalConfig
 	private currentLocale: SupportedLocale
 
 	constructor(config: RushCMSClientConfig) {
-		const cacheConfig = {
-			enabled: config.cache?.enabled ?? true,
-			ttl: config.cache?.ttl ?? 7200
-		}
-
-		const localeConfig = {
-			default: config.locale?.default ?? 'en' as SupportedLocale,
-			fallback: config.locale?.fallback ?? 'en' as SupportedLocale
-		}
-
 		this.config = {
 			baseUrl: config.baseUrl,
 			apiToken: config.apiToken,
 			siteSlug: config.siteSlug,
-			locale: localeConfig,
-			cache: cacheConfig,
+			locale: {
+				default: config.locale?.default ?? 'en' as SupportedLocale,
+				fallback: config.locale?.fallback ?? 'en' as SupportedLocale
+			},
+			cache: {
+				enabled: config.cache?.enabled ?? true,
+				freshTtl: config.cache?.freshTtl ?? 60,
+				staleTtl: config.cache?.staleTtl ?? 300
+			},
 			storage: config.storage || new MemoryStorageAdapter(),
 			debug: config.debug || false
 		}
 
-		this.currentLocale = localeConfig.default
+		this.currentLocale = this.config.locale.default
 	}
 
-	/**
-	 * Set the current locale for API requests
-	 */
 	setLocale(locale: SupportedLocale): void {
 		this.currentLocale = locale
-		this.log(`Locale changed to: ${locale}`)
 	}
 
-	/**
-	 * Get the current locale
-	 */
 	getLocale(): SupportedLocale {
 		return this.currentLocale
 	}
@@ -100,26 +102,66 @@ export class RushCMSClient {
 		}
 	}
 
+	private buildUrl(endpoint: string, withSlug: boolean = true): string {
+		if (withSlug) {
+			return `${this.config.baseUrl}/api/v1/${this.config.siteSlug}${endpoint}`
+		}
+		return `${this.config.baseUrl}/api/v1${endpoint}`
+	}
+
+	private buildQueryString(params?: Record<string, string | number | string[] | undefined>): string {
+		if (!params) return ''
+		const qs = new URLSearchParams()
+		for (const [key, value] of Object.entries(params)) {
+			if (value === undefined || value === null) continue
+			if (Array.isArray(value)) {
+				qs.set(key, value.join(','))
+			} else {
+				qs.set(key, String(value))
+			}
+		}
+		const str = qs.toString()
+		return str ? `?${str}` : ''
+	}
+
 	private async request<T>(
 		endpoint: string,
-		options: RequestInit = {}
+		options: RequestInit = {},
+		overrides?: { withSlug?: boolean; locale?: SupportedLocale; skipCache?: boolean }
 	): Promise<T> {
-		const url = `${this.config.baseUrl}/api/v1/${this.config.siteSlug}${endpoint}`
-		const startTime = Date.now()
+		const withSlug = overrides?.withSlug ?? true
+		const locale = overrides?.locale || this.currentLocale
+		const skipCache = overrides?.skipCache || false
+		const method = options.method || 'GET'
+		const url = this.buildUrl(endpoint, withSlug)
+		const cacheKey = `${url}${JSON.stringify(options.body || '')}`
+		const canCache = this.config.cache.enabled && method === 'GET' && !skipCache
 
-		this.log(`Request: ${options.method || 'GET'} ${endpoint}`)
+		this.log(`${method} ${endpoint}`)
 
-		const cacheKey = `${url}${JSON.stringify(options)}`
-
-		if (this.config.cache.enabled && options.method !== 'POST') {
+		if (canCache) {
 			const cached = await this.config.storage.get<T>(cacheKey)
 			if (cached) {
-				this.log(`Cache HIT: ${endpoint}`)
-				return cached
+				if (!cached.isStale) {
+					this.log(`Cache FRESH: ${endpoint}`)
+					return cached.data
+				}
+				this.log(`Cache STALE: ${endpoint} (revalidating)`)
+				this.revalidate<T>(url, options, locale, cacheKey).catch(() => {})
+				return cached.data
 			}
 			this.log(`Cache MISS: ${endpoint}`)
 		}
 
+		return this.doFetch<T>(url, options, locale, canCache ? cacheKey : undefined)
+	}
+
+	private async revalidate<T>(
+		url: string,
+		options: RequestInit,
+		locale: SupportedLocale,
+		cacheKey: string
+	): Promise<void> {
 		try {
 			const response = await fetch(url, {
 				...options,
@@ -127,41 +169,70 @@ export class RushCMSClient {
 					'Authorization': `Bearer ${this.config.apiToken}`,
 					'Content-Type': 'application/json',
 					'Accept': 'application/json',
-					'Accept-Language': this.currentLocale,
+					'Accept-Language': locale,
 					...(options.headers ?? {})
 				}
 			})
 
-			this.log(`Response: ${response.status} (${Date.now() - startTime}ms)`)
-
-			if (!response.ok) {
-				await this.handleError(response)
+			if (response.ok) {
+				const data = await response.json() as T
+				await this.config.storage.set(
+					cacheKey,
+					data,
+					this.config.cache.freshTtl,
+					this.config.cache.staleTtl
+				)
+				this.log(`Revalidated: ${url}`)
 			}
-
-			const data = await response.json() as T
-
-			if (this.config.cache.enabled && options.method !== 'POST') {
-				await this.config.storage.set(cacheKey, data, this.config.cache.ttl)
-			}
-
-			return data
 		} catch (error) {
-			this.log(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-			throw error
+			this.log(`Revalidation failed: ${error instanceof Error ? error.message : 'Unknown'}`)
 		}
 	}
 
-	private async handleError(response: Response): Promise<never> {
-		const status = response.status
-		let errorData: unknown
+	private async doFetch<T>(
+		url: string,
+		options: RequestInit,
+		locale: SupportedLocale,
+		cacheKey?: string
+	): Promise<T> {
+		const response = await fetch(url, {
+			...options,
+			headers: {
+				'Authorization': `Bearer ${this.config.apiToken}`,
+				'Content-Type': 'application/json',
+				'Accept': 'application/json',
+				'Accept-Language': locale,
+				...(options.headers ?? {})
+			}
+		})
 
+		if (!response.ok) {
+			await this.handleError(response)
+		}
+
+		const data = await response.json() as T
+
+		if (cacheKey) {
+			await this.config.storage.set(
+				cacheKey,
+				data,
+				this.config.cache.freshTtl,
+				this.config.cache.staleTtl
+			)
+		}
+
+		return data
+	}
+
+	private async handleError(response: Response): Promise<never> {
+		let errorData: unknown
 		try {
 			errorData = await response.json()
 		} catch {
 			errorData = null
 		}
 
-		switch (status) {
+		switch (response.status) {
 			case 401:
 				throw new RushCMSUnauthorizedError()
 			case 403:
@@ -175,54 +246,40 @@ export class RushCMSClient {
 				)
 			default:
 				throw new RushCMSError(
-					`API Error: ${String(response.status)} ${response.statusText}`,
-					status,
+					`API Error: ${response.status} ${response.statusText}`,
+					response.status,
 					errorData
 				)
 		}
+	}
+
+	async getCollections(locale?: SupportedLocale): Promise<ApiResponse<Collection[]>> {
+		return this.request<ApiResponse<Collection[]>>(
+			'/collections',
+			{},
+			{ locale }
+		)
 	}
 
 	async getEntries(
 		collection: number | string,
 		params?: EntriesQueryParams & { locale?: SupportedLocale }
 	): Promise<PaginatedResponse<Entry>> {
-		const queryString = new URLSearchParams()
+		const qs = this.buildQueryString({
+			page: params?.page,
+			per_page: params?.per_page,
+			tag: params?.tag,
+			tags: params?.tags ? (Array.isArray(params.tags) ? params.tags : [params.tags]) : undefined,
+			category: params?.category,
+			categories: params?.categories ? (Array.isArray(params.categories) ? params.categories : [params.categories]) : undefined,
+			tag_operator: params?.tag_operator
+		})
 
-		if (params?.page) {
-			queryString.set('page', params.page.toString())
-		}
-		if (params?.per_page) {
-			queryString.set('per_page', params.per_page.toString())
-		}
-		if (params?.tag) {
-			queryString.set('tag', params.tag)
-		}
-		if (params?.tags) {
-			const tags = Array.isArray(params.tags) ? params.tags.join(',') : params.tags
-			queryString.set('tags', tags)
-		}
-		if (params?.category) {
-			queryString.set('category', params.category)
-		}
-		if (params?.categories) {
-			const categories = Array.isArray(params.categories)
-				? params.categories.join(',')
-				: params.categories
-			queryString.set('categories', categories)
-		}
-		if (params?.tag_operator) {
-			queryString.set('tag_operator', params.tag_operator)
-		}
-
-		const endpoint = `/collections/${String(collection)}/entries${queryString.toString() ? `?${queryString}` : ''
-			}`
-
-		const locale = params?.locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': locale
-		}
-
-		return this.request<PaginatedResponse<Entry>>(endpoint, { headers })
+		return this.request<PaginatedResponse<Entry>>(
+			`/collections/${String(collection)}/entries${qs}`,
+			{},
+			{ locale: params?.locale }
+		)
 	}
 
 	async getEntry(
@@ -230,74 +287,194 @@ export class RushCMSClient {
 		slug: string,
 		locale?: SupportedLocale
 	): Promise<Entry> {
-		const endpoint = `/collections/${String(collection)}/entries/${slug}`
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		const response = await this.request<{ data: Entry }>(endpoint, { headers })
+		const response = await this.request<{ data: Entry }>(
+			`/collections/${String(collection)}/entries/${slug}`,
+			{},
+			{ locale }
+		)
 		return response.data
 	}
 
-	async getCollections(locale?: SupportedLocale): Promise<ApiResponse<Collection[]>> {
-		const endpoint = '/collections'
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		return this.request<ApiResponse<Collection[]>>(endpoint, { headers })
+	async getSearchIndex(
+		collection: number | string,
+		params?: SearchIndexParams
+	): Promise<SearchIndexEntry[]> {
+		const qs = this.buildQueryString({ locale: params?.locale })
+		return this.request<SearchIndexEntry[]>(
+			`/collections/${String(collection)}/search-index${qs}`
+		)
 	}
 
-	async getHomepage(locale?: SupportedLocale): Promise<ApiResponse<Homepage>> {
-		const endpoint = '/homepage'
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		return this.request<ApiResponse<Homepage>>(endpoint, { headers })
+	async getTags(locale?: SupportedLocale): Promise<ApiResponse<Tag[]>> {
+		return this.request<ApiResponse<Tag[]>>(
+			'/tags',
+			{},
+			{ locale }
+		)
+	}
+
+	async getTag(tagSlug: string, locale?: SupportedLocale): Promise<Tag> {
+		return this.request<Tag>(
+			`/tags/${tagSlug}`,
+			{},
+			{ locale }
+		)
+	}
+
+	async getTagEntries(tagSlug: string, locale?: SupportedLocale): Promise<ApiResponse<Entry[]>> {
+		return this.request<ApiResponse<Entry[]>>(
+			`/tags/${tagSlug}/entries`,
+			{},
+			{ locale }
+		)
+	}
+
+	async getCategories(locale?: SupportedLocale): Promise<ApiResponse<Tag[]>> {
+		return this.request<ApiResponse<Tag[]>>(
+			'/categories',
+			{},
+			{ locale }
+		)
+	}
+
+	async getCategory(categorySlug: string, locale?: SupportedLocale): Promise<Tag> {
+		return this.request<Tag>(
+			`/categories/${categorySlug}`,
+			{},
+			{ locale }
+		)
+	}
+
+	async getCategoryEntries(categorySlug: string, locale?: SupportedLocale): Promise<ApiResponse<Entry[]>> {
+		return this.request<ApiResponse<Entry[]>>(
+			`/categories/${categorySlug}/entries`,
+			{},
+			{ locale }
+		)
 	}
 
 	async getNavigations(locale?: SupportedLocale): Promise<ApiResponse<Navigation[]>> {
-		const endpoint = '/navigations'
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		return this.request<ApiResponse<Navigation[]>>(endpoint, { headers })
+		return this.request<ApiResponse<Navigation[]>>(
+			'/navigations',
+			{},
+			{ locale }
+		)
 	}
 
 	async getNavigation(key: string, locale?: SupportedLocale): Promise<ApiResponse<Navigation>> {
-		const endpoint = `/navigations/${key}`
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		return this.request<ApiResponse<Navigation>>(endpoint, { headers })
+		return this.request<ApiResponse<Navigation>>(
+			`/navigations/${key}`,
+			{},
+			{ locale }
+		)
 	}
 
 	async getLinkPages(locale?: SupportedLocale): Promise<ApiResponse<LinkPage[]>> {
-		const endpoint = '/linkpages'
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
-		}
-		return this.request<ApiResponse<LinkPage[]>>(endpoint, { headers })
+		return this.request<ApiResponse<LinkPage[]>>(
+			'/linkpages',
+			{},
+			{ locale }
+		)
 	}
 
 	async getLinkPage(key: string, locale?: SupportedLocale): Promise<ApiResponse<LinkPage>> {
-		const endpoint = `/linkpages/${key}`
-		const activeLocale = locale || this.currentLocale
-		const headers: HeadersInit = {
-			'Accept-Language': activeLocale
+		return this.request<ApiResponse<LinkPage>>(
+			`/linkpages/${key}`,
+			{},
+			{ locale }
+		)
+	}
+
+	async getForms(locale?: SupportedLocale): Promise<ApiResponse<Form[]>> {
+		return this.request<ApiResponse<Form[]>>(
+			'/forms',
+			{},
+			{ locale }
+		)
+	}
+
+	async getForm(key: string, locale?: SupportedLocale): Promise<ApiResponse<Form>> {
+		return this.request<ApiResponse<Form>>(
+			`/forms/${key}`,
+			{},
+			{ locale }
+		)
+	}
+
+	async submitForm(key: string, payload: FormSubmitPayload): Promise<FormSubmitResponse> {
+		return this.request<FormSubmitResponse>(
+			`/forms/${key}/submit`,
+			{
+				method: 'POST',
+				body: JSON.stringify(payload)
+			},
+			{ skipCache: true }
+		)
+	}
+
+	async getHomepage(locale?: SupportedLocale): Promise<ApiResponse<Homepage>> {
+		return this.request<ApiResponse<Homepage>>(
+			'/homepage',
+			{},
+			{ locale }
+		)
+	}
+
+	async getMembers(params?: MembersQueryParams): Promise<PaginatedResponse<Member>> {
+		const qs = this.buildQueryString({
+			status: params?.status,
+			role: params?.role,
+			search: params?.search,
+			per_page: params?.per_page,
+			page: params?.page
+		})
+		return this.request<PaginatedResponse<Member>>(`/members${qs}`)
+	}
+
+	async getMember(id: number): Promise<ApiResponse<Member>> {
+		return this.request<ApiResponse<Member>>(`/members/${id}`)
+	}
+
+	async getMemberByAuth0(auth0Id: string): Promise<ApiResponse<Member>> {
+		return this.request<ApiResponse<Member>>(`/members/auth0/${auth0Id}`)
+	}
+
+	async updateMember(id: number, data: MemberUpdatePayload): Promise<ApiResponse<Member>> {
+		return this.request<ApiResponse<Member>>(
+			`/members/${id}`,
+			{
+				method: 'PUT',
+				body: JSON.stringify(data)
+			},
+			{ skipCache: true }
+		)
+	}
+
+	async deleteMember(id: number): Promise<void> {
+		await this.request<void>(
+			`/members/${id}`,
+			{ method: 'DELETE' },
+			{ skipCache: true }
+		)
+	}
+
+	async getTeams(): Promise<ApiResponse<Team[]>> {
+		return this.request<ApiResponse<Team[]>>(
+			'/teams',
+			{},
+			{ withSlug: false }
+		)
+	}
+
+	async invalidateCache(prefix?: string): Promise<void> {
+		if (prefix) {
+			await this.config.storage.invalidate(prefix)
+		} else {
+			await this.config.storage.clear()
 		}
-		return this.request<ApiResponse<LinkPage>>(endpoint, { headers })
 	}
 
 	async clearCache(): Promise<void> {
 		await this.config.storage.clear()
-	}
-
-	async deleteFromCache(key: string): Promise<void> {
-		await this.config.storage.delete(key)
 	}
 }
