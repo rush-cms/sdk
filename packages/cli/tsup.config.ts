@@ -8,5 +8,6 @@ export default defineConfig({
     sourcemap: true,
     clean: true,
     minify: true,
-    shims: true
+    shims: true,
+    platform: 'node'
 })
