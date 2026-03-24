@@ -14,6 +14,7 @@ export interface Entry extends LocaleAwareResponse {
 		[key: string]: unknown
 	}
 	status: 'published' | 'draft'
+	sort_order: number | null
 	published_at: string
 	meta: EntryMeta
 	tags: Tag[]
